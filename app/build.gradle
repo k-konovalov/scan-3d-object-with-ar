@@ -20,6 +20,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 dependencies {
@@ -32,4 +39,9 @@ dependencies {
     //LifeCycle
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0'
+    //CameraX
+    api "androidx.camera:camera-core:1.0.0-beta07"
+    api "androidx.camera:camera-camera2:1.0.0-beta07"
+    api "androidx.camera:camera-lifecycle:1.0.0-beta07"
+    api "androidx.camera:camera-view:1.0.0-alpha14"
 }
