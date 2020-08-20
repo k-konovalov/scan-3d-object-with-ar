@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import com.arvrlab.reconstructcamera.CustomCameraX
 import com.arvrlab.reconstructcamera.R
+import com.warkiz.widget.IndicatorSeekBar
+import com.warkiz.widget.OnSeekChangeListener
+import com.warkiz.widget.SeekParams
 import kotlinx.android.synthetic.main.main_fragment.*
 
 class MainFragment : Fragment(R.layout.main_fragment) {
@@ -52,14 +55,16 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}
         })
-        sbShutter.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                cameraX.shutter.postValue(p1)
+        sbShutter.onSeekChangeListener = object : OnSeekChangeListener{
+            override fun onSeeking(seekParams: SeekParams?) {
+                cameraX.shutter.postValue(seekParams?.progress)
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-        })
+            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: IndicatorSeekBar?) {}
+        }
         sbFrameDuration.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 //cameraX.frameDuration.postValue(p1)
@@ -86,7 +91,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
-            maxShutter.observe(viewLifecycleOwner, Observer { sbShutter.max = it})
+            maxShutter.observe(viewLifecycleOwner, Observer { sbShutter.max = it.toFloat()})
             //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max =  })
             errorMessage.observe(viewLifecycleOwner, Observer {
                 showToastWith(it)

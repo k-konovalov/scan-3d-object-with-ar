@@ -46,13 +46,15 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <SeekBar
+    <com.warkiz.widget.IndicatorSeekBar
         android:id="@+id/sbShutter"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="18"
+        app:isb_show_thumb_text="true"
+        app:isb_show_indicator="none"
         app:layout_constraintBottom_toBottomOf="@+id/tvExposure"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

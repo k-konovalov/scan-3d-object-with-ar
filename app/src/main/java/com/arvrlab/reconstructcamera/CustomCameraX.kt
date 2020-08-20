@@ -55,7 +55,7 @@ class CustomCameraX {
         .filter { it < 1.0 } // less than second
         .reversed()
     val maxShutter = MutableLiveData<Int>()
-    val shutter = MutableLiveData<Int>()
+    val shutter = MutableLiveData<Int>(0)
 
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
