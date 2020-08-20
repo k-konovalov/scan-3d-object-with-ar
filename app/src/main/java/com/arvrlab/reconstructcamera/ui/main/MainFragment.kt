@@ -20,8 +20,6 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         super.onViewCreated(view, savedInstanceState)
         requestPermissions(permissions,0)
 
-        cameraX.logAndSetupAvailableCameraSettings(requireContext())
-
         sbWb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 cameraX.wb.postValue(p1)
@@ -68,6 +66,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         }
 
         cameraX.run {
+            logAndSetupAvailableCameraSettings(requireContext())
+
             wb.observe(viewLifecycleOwner, observerForCameraChange)
             focus.observe(viewLifecycleOwner, observerForCameraChange)
             iso.observe(viewLifecycleOwner, observerForCameraChange)
@@ -77,7 +77,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
             maxExposure.observe(viewLifecycleOwner, Observer { sbExposure.max = it })
-            maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max = it })
+            //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max = it })
         }
     }
 

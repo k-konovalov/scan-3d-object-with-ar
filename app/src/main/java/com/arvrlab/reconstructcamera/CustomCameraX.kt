@@ -52,7 +52,7 @@ class CustomCameraX {
     val exposure = MutableLiveData<Int>()
     val maxExposure = MutableLiveData<Int>()
     val frameDuration = MutableLiveData<Int>()
-    val maxFrameDuration = MutableLiveData<Int>()
+    val maxFrameDuration = MutableLiveData<Long>()
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
         mainExecutor = ContextCompat.getMainExecutor(context)
@@ -85,12 +85,17 @@ class CustomCameraX {
             var cameraLog = "Camera $id:"
             val cameraCharacteristics = cameraManager.getCameraCharacteristics(id)
             val facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
-            //MF
+
+            //Supported HW Level
+            cameraCharacteristics
+                .get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
+                ?.apply { cameraLog += "\nHardwareLevel Full: ${this == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL}" }
+            //AE
             cameraCharacteristics
                 .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
                 ?.apply { if (isEmpty()) return }
-                ?.forEach { manualFocus ->
-                    if (manualFocus == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) cameraLog += "\nManual AF: available"
+                ?.forEach { capability ->
+                    if (capability == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) cameraLog += "\nManual AE: available"
                 }
             //FOCUS
             cameraCharacteristics
@@ -112,18 +117,18 @@ class CustomCameraX {
             cameraCharacteristics
                 .get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
                 ?.run {
-                    cameraLog += "\nExposure time: ${lower.toMs()}ms - ${upper.toMs()}ms"
+                    cameraLog += "\nExposure time: ${lower.toMS()}ms - ${upper.toMS()}ms"
                     if(id == "0") {
-                        exposure.postValue(lower.toMs())
-                        maxExposure.postValue(upper.toMs())}
+                        exposure.postValue(lower.toMS())
+                        maxExposure.postValue(upper.toMS())}
                 }
             //FrameDuration
             cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_MAX_FRAME_DURATION)
                 ?.run {
-                    cameraLog += "\nMax Frame Duration time: ${this.toMs()}ms"
+                    cameraLog += "\nMax Frame Duration time: ${this.toMS()}ms"
                     if(id == "0") {
-                        frameDuration.postValue(this.toMs())
-                        maxFrameDuration.postValue(this.toMs())
+                        frameDuration.postValue(this.toMS())
+                        maxFrameDuration.postValue(this)
                     }
                 }
 
@@ -140,20 +145,30 @@ class CustomCameraX {
         internalCameraView: PreviewView,
         viewLifecycleOwner: LifecycleOwner
     ) = Runnable {
-        val customSize = Size(1920,1080)
+        val custoMSize = Size(1920,1080)
 
         cameraProvider = cameraProviderFuture.get()
         cameraProvider?.unbindAll() // Must unbind the use-cases before rebinding them.
 
-        preview = setupAndBuildPreview(customSize, rotation, screenAspectRatio)
+        logCurrentCameraSettings()
+        preview = setupAndBuildPreview(custoMSize, rotation, screenAspectRatio)
         imageCapture = setupAndBuildImageCapture(screenAspectRatio, rotation)
 
         bindCamera(viewLifecycleOwner, internalCameraView, cameraSelector)
     }
 
-    private fun setupAndBuildPreview(customSize: Size, rotation: Int, screenAspectRatio: Int): Preview = Preview.Builder().let {
+    private fun logCurrentCameraSettings(){
+        var log = "Current Camera Settings:"
+        log += "\nFocus: ${focus.value}"
+        log += "\nISO: ${iso.value}"
+        log += "\nExposure: ${exposure.value}ms"
+        //log += "\nFrame Duration: ${frameDuration.value}ms"
+        Log.e (TAG, log)
+    }
+
+    private fun setupAndBuildPreview(custoMSize: Size, rotation: Int, screenAspectRatio: Int): Preview = Preview.Builder().let {
         it.setTargetAspectRatio(screenAspectRatio)
-        //it.setTargetResolution(customSize)
+        //it.setTargetResolution(custoMSize)
         it.setTargetRotation(rotation)
 
         Camera2Interop.Extender(it).apply {
@@ -168,10 +183,12 @@ class CustomCameraX {
             setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
             // abjust ISO using seekbar's params
             setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
+            /** If we disabling auto-exposure, we need to set the exposure time, in addition to the sensitivity.
+            You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
             // abjust Exposure using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, exposure.value!!.toNS()) //EXPOSURE_TIME_LIMIT_NS
+            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, 66.toNS()) //MS -> NS
             // abjust Frame Duration using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuration.value!!.toNS()) ////FRAME_DURATION_NS
+            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 66.toNS()) //MS -> NS
         }
 
         it.build()
@@ -223,6 +240,6 @@ class CustomCameraX {
         )
     }
 
-    private fun Long.toMs(): Int = (this / 1000L).toInt() // NS -> MS
-    private fun Int.toNS(): Long = (this * 1000L)
+    private fun Long.toMS(): Int = (this / 1000L).toInt() // NS -> MS
+    private fun Int.toNS(): Long = (this * 1000 * 1000L)
 }
