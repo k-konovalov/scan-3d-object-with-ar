@@ -43,34 +43,19 @@ class CustomCameraX {
     private val RATIO_4_3_VALUE = 4.0 / 3.0
     private val RATIO_16_9_VALUE = 16.0 / 9.0
 
-    //
+    //EV & WB
     val wb = MutableLiveData<Int>(0)
     val focus = MutableLiveData<Int>(0)
-    val maxFocus = MutableLiveData<Int>(0)
+    val maxFocus = MutableLiveData<Int>()
+    val iso = MutableLiveData<Int>()
+    val maxIso = MutableLiveData<Int>()
+    val exposureTime = MutableLiveData<Int>()
+    val maxExposure = MutableLiveData<Int>()
 
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
         mainExecutor = ContextCompat.getMainExecutor(context)
         // Get screen metrics used to setup camera for full screen resolution
-
-        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        cameraManager.cameraIdList.forEach {id ->
-            val cameraCharacteristics = cameraManager.getCameraCharacteristics(id)
-            val facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
-            cameraCharacteristics
-                .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
-                ?.apply { if (isEmpty()) return }
-                ?.forEach { manualFocus ->
-                    if (manualFocus == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) Log.e(TAG, "Manual AF available on camera id: $id!")
-            }
-            cameraCharacteristics
-                .get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)?.also {
-                    Log.e(TAG, "Max focus on camera id $id $it")
-                    if(maxFocus.value!! < it.toInt()) maxFocus.postValue(it.toInt())
-                }
-            //if (facing == lensFacing) return@forEach
-        }
-
         val metrics = DisplayMetrics().also { internalCameraView.display.getRealMetrics(it) }
         val screenAspectRatio = aspectRatio(metrics.widthPixels, metrics.heightPixels)
         val rotation = internalCameraView.display.rotation
@@ -91,6 +76,50 @@ class CustomCameraX {
                 viewLifecycleOwner
             ), mainExecutor
         )
+    }
+
+    fun logAndSetupAvailableCameraSettings(context: Context){
+        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        cameraManager.cameraIdList.forEach {id ->
+            var cameraLog = "Camera $id:\n"
+            val cameraCharacteristics = cameraManager.getCameraCharacteristics(id)
+            val facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
+            //MF
+            cameraCharacteristics
+                .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+                ?.apply { if (isEmpty()) return }
+                ?.forEach { manualFocus ->
+                    if (manualFocus == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) cameraLog += "Manual AF: available\n"
+                }
+            //FOCUS
+            cameraCharacteristics
+                .get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)?.also {
+                    cameraLog += "Max focus: $it\n"
+                    if(id == "0") maxFocus.postValue(it.toInt())
+                }
+            //ISO
+            cameraCharacteristics
+                .get(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE)
+                ?.run {
+                    cameraLog += "ISO: $lower - $upper\n"
+                    if(id == "0") {
+                        iso.postValue(lower)
+                        maxIso.postValue(upper)
+                    }
+                }
+            //Exposure
+            cameraCharacteristics
+                .get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
+                ?.run {
+                    cameraLog += "Exposure time: ${lower.toMs()}ms - ${upper.toMs()}ms"
+                    if(id == "0") {
+                        exposureTime.postValue(lower.toMs())
+                        maxExposure.postValue(upper.toMs())}
+                }
+
+            Log.e(TAG, cameraLog)
+            //if (facing == lensFacing) return@forEach
+        }
     }
 
     private fun futureListener(
@@ -118,17 +147,21 @@ class CustomCameraX {
         it.setTargetRotation(rotation)
 
         Camera2Interop.Extender(it).apply {
-            //setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
-            //setCaptureRequestOption(CaptureRequest.AWB, CameraMetadata.CONTROL_AWB_MODE_OFF)
-            //.setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 30L)//FRAME_DURATION_NS)
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, 0L)//EXPOSURE_TIME_LIMIT_NS)
-            // adjust color correction using seekbar's params
+            // adjust WB using seekbar's params
             setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
             setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_MODE, CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX);
             setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_GAINS, colorTemperature(wb.value!!))
-            // abjust focus using seekbar's params
+            // abjust FOCUS using seekbar's params
             setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
             setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
+
+            // abjust ISO using seekbar's params
+            setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
+            // Exposure
+            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, exposureTime.value!!.toNS()) //EXPOSURE_TIME_LIMIT_NS
+            // Frame Durr
+            //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 30L) ////FRAME_DURATION_NS
         }
 
         it.build()
@@ -179,4 +212,7 @@ class CustomCameraX {
             3.7420394f + -0.0287829f * wbFactor
         )
     }
+
+    private fun Long.toMs(): Int = (this / 1000L).toInt() // NS -> MS
+    private fun Int.toNS(): Long = (this * 1000L)
 }

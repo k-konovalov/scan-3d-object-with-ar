@@ -7,37 +7,93 @@
     android:layout_height="match_parent"
     tools:context=".ui.main.MainFragment">
 
+    <TextView
+        android:id="@+id/tvWB"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#803794C1"
+        android:elevation="1dp"
+        android:gravity="center"
+        android:text="WB"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/sbWb"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <SeekBar
         android:id="@+id/sbWb"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="16dp"
         android:elevation="1dp"
         android:max="100"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/tvWB"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tvWB"
+        app:layout_constraintTop_toTopOf="@+id/tvWB" />
+
+    <TextView
+        android:id="@+id/tvFocus"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#803794C1"
+        android:elevation="1dp"
+        android:gravity="center"
+        android:text="Focus"
+        app:layout_constraintBottom_toTopOf="@+id/tvISO"
+        app:layout_constraintEnd_toStartOf="@+id/sbFocus"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
     <SeekBar
         android:id="@+id/sbFocus"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="10"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/tvFocus"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tvFocus"
+        app:layout_constraintTop_toTopOf="@+id/tvFocus" />
+
+    <TextView
+        android:id="@+id/tvISO"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#803794C1"
+        android:elevation="1dp"
+        android:gravity="center"
+        android:text="ISO"
+        app:layout_constraintBottom_toTopOf="@+id/tvWB"
+        app:layout_constraintEnd_toStartOf="@+id/sbISO"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <SeekBar
+        android:id="@+id/sbISO"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:elevation="1dp"
+        android:max="6400"
+        app:layout_constraintBottom_toBottomOf="@+id/tvISO"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tvISO"
+        app:layout_constraintTop_toTopOf="@+id/tvISO" />
 
     <androidx.camera.view.PreviewView
         android:id="@+id/pvPreview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="0dp">
+        android:elevation="0dp"
+        android:visibility="visible"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="136dp">
+
     </androidx.camera.view.PreviewView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
