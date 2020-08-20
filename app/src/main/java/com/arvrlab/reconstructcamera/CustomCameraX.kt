@@ -54,7 +54,8 @@ class CustomCameraX {
     var shutterSpeeds = listOf(30.0, 15.0, 8.0, 4.0, 2.0, 1.0, 1.0/2, 1.0/4, 1.0/8, 1.0/15, 1.0/30, 1.0/60, 1.0/125, 1.0/250, 1.0/500, 1.0/1000, 1.0/2000, 1.0/4000, 1.0/8000)
         .filter { it < 1.0 } // less than second
         .reversed()
-    val shutterSpeedSteps = MutableLiveData<Int>()
+    val maxShutter = MutableLiveData<Int>()
+    val shutter = MutableLiveData<Int>()
 
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
@@ -128,11 +129,11 @@ class CustomCameraX {
                     cameraLog += "\nExposure time: ${lower.toMS()}ms - ${upper.toMS()}ms"
                     if(id == "0") {
                         shutterSpeeds = shutterSpeeds.filter {
-                            val currentShutterInNS = (it * 1000).toNS() //some magic formula
+                            val currentShutterInNS = (it * 1000).toNanoSecond() //some magic formula
                             val isSupportedByCamera = currentShutterInNS in lower..upper
                             isSupportedByCamera
                         }
-                        shutterSpeedSteps.postValue(shutterSpeeds.lastIndex)
+                        maxShutter.postValue(shutterSpeeds.lastIndex)
                     }
                 }
             //FrameDuration
@@ -174,7 +175,7 @@ class CustomCameraX {
         var log = "Current Camera Settings:"
         log += "\nFocus: ${focus.value}"
         log += "\nISO: ${iso.value}"
-        log += "\nExposure: ${exposure.value}ms"
+        log += "\nShutter: ${shutter.value}ms"
         //log += "\nFrame Duration: ${frameDuration.value}ms"
         Log.e (TAG, log)
     }
@@ -200,11 +201,11 @@ class CustomCameraX {
             You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
             // abjust Exposure using seekbar's params
             val frameDuraton = ((1.0/60) * 1000)
-            val evChoice = (ev[exposure.value!!] * 1000)
-            errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${exposure.value!!}")
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNS()) //MS -> NS (1.0/60) * 1000).toNS() also preview FPS
+            val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
+            errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${shutter.value!!}")
+            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
             // abjust FPS using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuraton.toNS()) // 60FPS
+            //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuraton.toNanoSecond()) // 60FPS
         }
 
         it.build()
@@ -257,7 +258,7 @@ class CustomCameraX {
     }
 
     private fun Long.toMS(): Int = (this / million()).toInt() // NS -> MS
-    private fun Int.toNS(): Long = (this * million()) // MS -> NS
-    private fun Double.toNS(): Long = (this * million()).toLong()
+    private fun Int.toNanoSecond(): Long = (this * million()) // MS -> NS
+    private fun Double.toNanoSecond(): Long = (this * million()).toLong()
     private fun million() = (1 * 1000 * 1000L)
 }
