@@ -3,7 +3,6 @@ package com.arvrlab.reconstructcamera.ui.main
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
-import android.widget.SeekBar
 import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
@@ -31,48 +30,46 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     }
 
     private fun initSeekbarsListeners(){
-        sbWb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                cameraX.wb.postValue(p1)
+        sbWb.onSeekChangeListener = object : OnSeekChangeListener{
+            override fun onSeeking(seekParams: SeekParams?) {
+                cameraX.wb.postValue(seekParams?.progress)
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-        })
-        sbFocus.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                cameraX.focus.postValue(p1)
+            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: IndicatorSeekBar?) {}
+        }
+        sbFocus.onSeekChangeListener = object : OnSeekChangeListener{
+            override fun onSeeking(seekParams: SeekParams?) {
+                cameraX.focus.postValue(seekParams?.progress)
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-        })
-        sbISO.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                cameraX.iso.postValue(p1 + 50) // Min ISO always 50
+            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: IndicatorSeekBar?) {}
+        }
+        sbISO.onSeekChangeListener = object : OnSeekChangeListener{
+            override fun onSeeking(seekParams: SeekParams?) {
+                cameraX.iso.postValue(seekParams?.progress?.plus(50)) // Min ISO always 50
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-        })
+            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: IndicatorSeekBar?) {}
+        }
         sbShutter.onSeekChangeListener = object : OnSeekChangeListener{
             override fun onSeeking(seekParams: SeekParams?) {
                 cameraX.shutter.postValue(seekParams?.progress)
             }
 
-            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {
-            }
-
+            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {}
             override fun onStopTrackingTouch(seekBar: IndicatorSeekBar?) {}
         }
-        sbFrameDuration.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
-            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+        sbFrameDuration.onSeekChangeListener = object : OnSeekChangeListener{
+            override fun onSeeking(seekParams: SeekParams?) {
                 //cameraX.frameDuration.postValue(p1)
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {}
-            override fun onStopTrackingTouch(p0: SeekBar?) {}
-        })
+            override fun onStartTrackingTouch(seekBar: IndicatorSeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: IndicatorSeekBar?) {}
+        }
     }
 
     private fun initCameraXObservers(){
@@ -89,8 +86,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             shutter.observe(viewLifecycleOwner, observerForCameraChange)
             frameDuration.observe(viewLifecycleOwner, observerForCameraChange)
 
-            maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it })
-            maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
+            maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it.toFloat() })
+            maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it.toFloat() })
             maxShutter.observe(viewLifecycleOwner, Observer { sbShutter.max = it.toFloat()})
             //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max =  })
             errorMessage.observe(viewLifecycleOwner, Observer {

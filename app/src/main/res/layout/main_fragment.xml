@@ -20,13 +20,15 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <SeekBar
+    <com.warkiz.widget.IndicatorSeekBar
         android:id="@+id/sbFrameDuration"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="100"
+        app:isb_show_thumb_text="true"
+        app:isb_show_indicator="none"
         app:layout_constraintBottom_toBottomOf="@+id/tvFrameDuration"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -74,13 +76,15 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <SeekBar
+    <com.warkiz.widget.IndicatorSeekBar
         android:id="@+id/sbWb"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="100"
+        app:isb_show_thumb_text="true"
+        app:isb_show_indicator="none"
         app:layout_constraintBottom_toBottomOf="@+id/tvWB"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -100,13 +104,15 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <SeekBar
+    <com.warkiz.widget.IndicatorSeekBar
         android:id="@+id/sbFocus"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="10"
+        app:isb_show_thumb_text="true"
+        app:isb_show_indicator="none"
         app:layout_constraintBottom_toBottomOf="@+id/tvFocus"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -126,13 +132,15 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <SeekBar
+    <com.warkiz.widget.IndicatorSeekBar
         android:id="@+id/sbISO"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="6400"
+        app:isb_show_thumb_text="true"
+        app:isb_show_indicator="none"
         app:layout_constraintBottom_toBottomOf="@+id/tvISO"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
