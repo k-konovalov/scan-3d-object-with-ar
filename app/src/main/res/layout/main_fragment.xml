@@ -52,7 +52,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
-        android:max="100"
+        android:max="18"
         app:layout_constraintBottom_toBottomOf="@+id/tvExposure"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

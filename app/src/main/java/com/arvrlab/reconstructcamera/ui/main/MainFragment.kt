@@ -54,7 +54,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         })
         sbExposure.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                cameraX.exposure.postValue(p1 + 30)
+                cameraX.exposure.postValue(p1)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
@@ -62,7 +62,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         })
         sbFrameDuration.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                cameraX.frameDuration.postValue(p1)
+                //cameraX.frameDuration.postValue(p1)
             }
 
             override fun onStartTrackingTouch(p0: SeekBar?) {}
@@ -86,8 +86,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
-            maxExposure.observe(viewLifecycleOwner, Observer { sbExposure.max = it })
-            //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max = it })
+            sbExposure.max = ev.size
+            //maxExposure.observe(viewLifecycleOwner, Observer { sbExposure.max = it })
+            //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max =  })
             errorMessage.observe(viewLifecycleOwner, Observer {
                 showToastWith(it)
             })

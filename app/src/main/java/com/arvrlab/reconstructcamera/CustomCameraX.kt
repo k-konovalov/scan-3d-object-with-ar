@@ -53,6 +53,7 @@ class CustomCameraX {
     val maxExposure = MutableLiveData<Int>()
     val frameDuration = MutableLiveData<Int>()
     val maxFrameDuration = MutableLiveData<Long>()
+    val ev = listOf(30.0, 15.0, 8.0, 4.0, 2.0, 1.0, 1.0/2, 1.0/4, 1.0/8, 1.0/15, 1.0/30, 1.0/60, 1.0/125, 1.0/250, 1.0/500, 1.0/1000, 1.0/2000, 1.0/4000, 1.0/8000)//in sec
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
         mainExecutor = ContextCompat.getMainExecutor(context)
@@ -125,7 +126,8 @@ class CustomCameraX {
                     cameraLog += "\nExposure time: ${lower.toMS()}ms - ${upper.toMS()}ms"
                     if(id == "0") {
                         exposure.postValue(lower.toMS())
-                        maxExposure.postValue(upper.toMS())}
+                        maxExposure.postValue(upper.toMS())
+                        }
                 }
             //FrameDuration
             cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_MAX_FRAME_DURATION)
@@ -191,9 +193,10 @@ class CustomCameraX {
             /** If we disabling auto-exposure, we need to set the exposure time, in addition to the sensitivity.
             You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
             // abjust Exposure using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, (1*1000/15).toNS()) //MS -> NS
-            // abjust Frame Duration using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, (1*1000/15).toNS()) //MS -> NS
+            val evChoise = (ev[exposure.value!!] * 1000)
+            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, ((1.0/15) * 1000).toNS()) //MS -> NS (1*1000/15).toNS()
+            // abjust FPS using seekbar's params
+            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, ((1.0/15) * 1000).toNS()) // 30FPS
         }
 
         it.build()
@@ -245,6 +248,8 @@ class CustomCameraX {
         )
     }
 
-    private fun Long.toMS(): Int = (this / 1000L).toInt() // NS -> MS
-    private fun Int.toNS(): Long = (this * 1000 * 1000L)
+    private fun Long.toMS(): Int = (this / million()).toInt() // NS -> MS
+    private fun Int.toNS(): Long = (this * million()) // MS -> NS
+    private fun Double.toNS(): Long = (this * million()).toLong()
+    private fun million() = (1 * 1000 * 1000L)
 }
