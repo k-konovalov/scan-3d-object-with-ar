@@ -27,7 +27,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         initSeekbarsListeners()
     }
 
-    fun initSeekbarsListeners(){
+    private fun initSeekbarsListeners(){
         sbWb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 cameraX.wb.postValue(p1)
@@ -70,7 +70,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         })
     }
 
-    fun initCameraXObservers(){
+    private fun initCameraXObservers(){
         val observerForCameraChange = Observer<Int> {
             pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
         }
