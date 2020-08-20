@@ -40,14 +40,14 @@
         android:background="#803794C1"
         android:elevation="1dp"
         android:gravity="center"
-        android:text="Exp"
+        android:text="Shutter"
         app:layout_constraintBottom_toTopOf="@+id/tvFocus"
-        app:layout_constraintEnd_toStartOf="@+id/sbExposure"
+        app:layout_constraintEnd_toStartOf="@+id/sbShutter"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
     <SeekBar
-        android:id="@+id/sbExposure"
+        android:id="@+id/sbShutter"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"

@@ -52,7 +52,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}
         })
-        sbExposure.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+        sbShutter.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 cameraX.exposure.postValue(p1)
             }
@@ -86,8 +86,8 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
-            sbExposure.max = ev.size
-            //maxExposure.observe(viewLifecycleOwner, Observer { sbExposure.max = it })
+
+            shutterSpeedSteps.observe(viewLifecycleOwner, Observer { sbShutter.max = it})
             //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max =  })
             errorMessage.observe(viewLifecycleOwner, Observer {
                 showToastWith(it)
