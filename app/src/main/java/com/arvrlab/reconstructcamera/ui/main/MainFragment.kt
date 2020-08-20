@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.SeekBar
+import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -20,6 +21,13 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         super.onViewCreated(view, savedInstanceState)
         requestPermissions(permissions,0)
 
+        cameraX.logAndSetupAvailableCameraSettings(requireContext())
+
+        initCameraXObservers()
+        initSeekbarsListeners()
+    }
+
+    fun initSeekbarsListeners(){
         sbWb.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
                 cameraX.wb.postValue(p1)
@@ -60,7 +68,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}
         })
+    }
 
+    fun initCameraXObservers(){
         val observerForCameraChange = Observer<Int> {
             pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
         }
@@ -78,7 +88,14 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
             maxExposure.observe(viewLifecycleOwner, Observer { sbExposure.max = it })
             //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max = it })
+            errorMessage.observe(viewLifecycleOwner, Observer {
+                showToastWith(it)
+            })
         }
+    }
+
+    private fun showToastWith(it: String?) {
+        Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

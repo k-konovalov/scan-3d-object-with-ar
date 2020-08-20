@@ -89,7 +89,12 @@ class CustomCameraX {
             //Supported HW Level
             cameraCharacteristics
                 .get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
-                ?.apply { cameraLog += "\nHardwareLevel Full: ${this == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL}" }
+                ?.apply {
+                    val isCameraSupportFullCapabilities =
+                        (this == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    if (isCameraSupportFullCapabilities) cameraLog += "\nHardwareLevel Full: $isCameraSupportFullCapabilities"
+                    else { errorMessage.postValue("Warning: This camera on device doesn't support full capabilities") }
+                }
             //AE
             cameraCharacteristics
                 .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
@@ -186,9 +191,9 @@ class CustomCameraX {
             /** If we disabling auto-exposure, we need to set the exposure time, in addition to the sensitivity.
             You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
             // abjust Exposure using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, 66.toNS()) //MS -> NS
+            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, (1*1000/15).toNS()) //MS -> NS
             // abjust Frame Duration using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 66.toNS()) //MS -> NS
+            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, (1*1000/15).toNS()) //MS -> NS
         }
 
         it.build()
