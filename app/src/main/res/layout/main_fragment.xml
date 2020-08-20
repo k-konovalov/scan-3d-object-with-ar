@@ -8,6 +8,32 @@
     tools:context=".ui.main.MainFragment">
 
     <TextView
+        android:id="@+id/tvFrameDuration"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#803794C1"
+        android:elevation="1dp"
+        android:gravity="center"
+        android:text="FD"
+        app:layout_constraintBottom_toTopOf="@+id/tvExposure"
+        app:layout_constraintEnd_toStartOf="@+id/sbFrameDuration"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <SeekBar
+        android:id="@+id/sbFrameDuration"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:elevation="1dp"
+        android:max="100"
+        app:layout_constraintBottom_toBottomOf="@+id/tvFrameDuration"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tvFrameDuration"
+        app:layout_constraintTop_toTopOf="@+id/tvFrameDuration" />
+
+    <TextView
         android:id="@+id/tvExposure"
         android:layout_width="50dp"
         android:layout_height="50dp"
@@ -24,6 +50,7 @@
         android:id="@+id/sbExposure"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="100"
         app:layout_constraintBottom_toBottomOf="@+id/tvExposure"

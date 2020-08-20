@@ -51,6 +51,8 @@ class CustomCameraX {
     val maxIso = MutableLiveData<Int>()
     val exposure = MutableLiveData<Int>()
     val maxExposure = MutableLiveData<Int>()
+    val frameDuration = MutableLiveData<Int>()
+    val maxFrameDuration = MutableLiveData<Int>()
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
         mainExecutor = ContextCompat.getMainExecutor(context)
@@ -80,7 +82,7 @@ class CustomCameraX {
     fun logAndSetupAvailableCameraSettings(context: Context){
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
         cameraManager.cameraIdList.forEach {id ->
-            var cameraLog = "Camera $id:\n"
+            var cameraLog = "Camera $id:"
             val cameraCharacteristics = cameraManager.getCameraCharacteristics(id)
             val facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
             //MF
@@ -88,19 +90,19 @@ class CustomCameraX {
                 .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
                 ?.apply { if (isEmpty()) return }
                 ?.forEach { manualFocus ->
-                    if (manualFocus == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) cameraLog += "Manual AF: available\n"
+                    if (manualFocus == CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR) cameraLog += "\nManual AF: available"
                 }
             //FOCUS
             cameraCharacteristics
                 .get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE)?.also {
-                    cameraLog += "Max focus: $it\n"
+                    cameraLog += "\nMax focus: $it"
                     if(id == "0") maxFocus.postValue(it.toInt())
                 }
             //ISO
             cameraCharacteristics
                 .get(CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE)
                 ?.run {
-                    cameraLog += "ISO: $lower - $upper\n"
+                    cameraLog += "\nISO: $lower - $upper"
                     if(id == "0") {
                         iso.postValue(lower)
                         maxIso.postValue(upper)
@@ -110,10 +112,19 @@ class CustomCameraX {
             cameraCharacteristics
                 .get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE)
                 ?.run {
-                    cameraLog += "Exposure time: ${lower.toMs()}ms - ${upper.toMs()}ms"
+                    cameraLog += "\nExposure time: ${lower.toMs()}ms - ${upper.toMs()}ms"
                     if(id == "0") {
                         exposure.postValue(lower.toMs())
                         maxExposure.postValue(upper.toMs())}
+                }
+            //FrameDuration
+            cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_MAX_FRAME_DURATION)
+                ?.run {
+                    cameraLog += "\nMax Frame Duration time: ${this.toMs()}ms"
+                    if(id == "0") {
+                        frameDuration.postValue(this.toMs())
+                        maxFrameDuration.postValue(this.toMs())
+                    }
                 }
 
             Log.e(TAG, cameraLog)
@@ -159,8 +170,8 @@ class CustomCameraX {
             setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
             // abjust Exposure using seekbar's params
             setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, exposure.value!!.toNS()) //EXPOSURE_TIME_LIMIT_NS
-            // Frame Durr
-            //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 30L) ////FRAME_DURATION_NS
+            // abjust Frame Duration using seekbar's params
+            setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuration.value!!.toNS()) ////FRAME_DURATION_NS
         }
 
         it.build()
@@ -203,7 +214,7 @@ class CustomCameraX {
         return AspectRatio.RATIO_16_9
     }
 
-    fun colorTemperature(wbFactor: Int): RggbChannelVector { //0..100
+    private fun colorTemperature(wbFactor: Int): RggbChannelVector { //0..100
         return RggbChannelVector(
             0.635f + 0.0208333f * wbFactor,
             1.0f,
