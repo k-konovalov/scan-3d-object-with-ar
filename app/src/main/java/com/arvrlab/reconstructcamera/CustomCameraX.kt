@@ -202,7 +202,7 @@ class CustomCameraX {
             // abjust Exposure using seekbar's params
             val frameDuraton = ((1.0/60) * 1000)
             val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
-            errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${shutter.value!!}")
+            //errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${shutter.value!!}")
             setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
             // abjust FPS using seekbar's params
             //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuraton.toNanoSecond()) // 60FPS
