@@ -147,18 +147,18 @@ class CustomCameraX {
         it.setTargetRotation(rotation)
 
         Camera2Interop.Extender(it).apply {
-            // adjust WB using seekbar's params
+            //Turn on Manual control
+            setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+            setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
             setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
             setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_MODE, CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX);
+            // adjust WB using seekbar's params
             setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_GAINS, colorTemperature(wb.value!!))
             // abjust FOCUS using seekbar's params
-            setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
             setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
-
             // abjust ISO using seekbar's params
-            setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
             setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
-            // Exposure
+            // abjust Exposure using seekbar's params
             setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, exposureTime.value!!.toNS()) //EXPOSURE_TIME_LIMIT_NS
             // Frame Durr
             //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 30L) ////FRAME_DURATION_NS
