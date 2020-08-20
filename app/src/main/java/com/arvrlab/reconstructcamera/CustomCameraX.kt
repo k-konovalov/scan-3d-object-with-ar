@@ -49,9 +49,8 @@ class CustomCameraX {
     val maxFocus = MutableLiveData<Int>()
     val iso = MutableLiveData<Int>()
     val maxIso = MutableLiveData<Int>()
-    val exposureTime = MutableLiveData<Int>()
+    val exposure = MutableLiveData<Int>()
     val maxExposure = MutableLiveData<Int>()
-
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
         mainExecutor = ContextCompat.getMainExecutor(context)
@@ -113,7 +112,7 @@ class CustomCameraX {
                 ?.run {
                     cameraLog += "Exposure time: ${lower.toMs()}ms - ${upper.toMs()}ms"
                     if(id == "0") {
-                        exposureTime.postValue(lower.toMs())
+                        exposure.postValue(lower.toMs())
                         maxExposure.postValue(upper.toMs())}
                 }
 
@@ -159,7 +158,7 @@ class CustomCameraX {
             // abjust ISO using seekbar's params
             setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
             // abjust Exposure using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, exposureTime.value!!.toNS()) //EXPOSURE_TIME_LIMIT_NS
+            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, exposure.value!!.toNS()) //EXPOSURE_TIME_LIMIT_NS
             // Frame Durr
             //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, 30L) ////FRAME_DURATION_NS
         }

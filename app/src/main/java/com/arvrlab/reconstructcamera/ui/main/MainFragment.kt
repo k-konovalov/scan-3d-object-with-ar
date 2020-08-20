@@ -46,6 +46,14 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}
         })
+        sbExposure.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+            override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
+                cameraX.exposure.postValue(p1 + 30)
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
+            override fun onStopTrackingTouch(p0: SeekBar?) {}
+        })
 
         val observerForCameraChange = Observer<Int> {
             pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
@@ -55,8 +63,10 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             wb.observe(viewLifecycleOwner, observerForCameraChange)
             focus.observe(viewLifecycleOwner, observerForCameraChange)
             iso.observe(viewLifecycleOwner, observerForCameraChange)
+            exposure.observe(viewLifecycleOwner, observerForCameraChange)
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it })
+            maxExposure.observe(viewLifecycleOwner, Observer { sbExposure.max = it })
         }
     }
 

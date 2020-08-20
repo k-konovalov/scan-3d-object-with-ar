@@ -8,6 +8,31 @@
     tools:context=".ui.main.MainFragment">
 
     <TextView
+        android:id="@+id/tvExposure"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="#803794C1"
+        android:elevation="1dp"
+        android:gravity="center"
+        android:text="Exp"
+        app:layout_constraintBottom_toTopOf="@+id/tvFocus"
+        app:layout_constraintEnd_toStartOf="@+id/sbExposure"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <SeekBar
+        android:id="@+id/sbExposure"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:elevation="1dp"
+        android:max="100"
+        app:layout_constraintBottom_toBottomOf="@+id/tvExposure"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/tvExposure"
+        app:layout_constraintTop_toTopOf="@+id/tvExposure" />
+
+    <TextView
         android:id="@+id/tvWB"
         android:layout_width="50dp"
         android:layout_height="50dp"
