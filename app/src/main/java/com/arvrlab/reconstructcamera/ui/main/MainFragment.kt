@@ -27,6 +27,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
         initCameraXObservers()
         initSeekbarsListeners()
+        initSwitchListeners()
     }
 
     private fun initSeekbarsListeners(){
@@ -72,8 +73,27 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         }
     }
 
+    private fun initSwitchListeners() {
+        sAF.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) cameraX.autoFocus.postValue(true)
+            else cameraX.autoFocus.postValue(false)
+        }
+        sAutoIsoShutter.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) cameraX.autoExposition.postValue(true)
+            else cameraX.autoExposition.postValue(false)
+        }
+        sAutoWB.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) cameraX.autoWB.postValue(true)
+            else cameraX.autoWB.postValue(false)
+        }
+        sFlash.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) cameraX.flash.postValue(true)
+            else cameraX.flash.postValue(false)
+        }
+    }
+
     private fun initCameraXObservers(){
-        val observerForCameraChange = Observer<Int> {
+        val observerForCameraChange = Observer<Any> { _ ->
             pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
         }
 
@@ -85,6 +105,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             iso.observe(viewLifecycleOwner, observerForCameraChange)
             shutter.observe(viewLifecycleOwner, observerForCameraChange)
             frameDuration.observe(viewLifecycleOwner, observerForCameraChange)
+            autoExposition.observe(viewLifecycleOwner, observerForCameraChange)
+            autoFocus.observe(viewLifecycleOwner, observerForCameraChange)
+            autoWB.observe(viewLifecycleOwner, observerForCameraChange)
 
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it.toFloat() })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it.toFloat() })
@@ -107,6 +130,4 @@ class MainFragment : Fragment(R.layout.main_fragment) {
                 pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
         }
     }
-
-
 }

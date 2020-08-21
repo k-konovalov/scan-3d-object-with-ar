@@ -5,7 +5,58 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:textAlignment="center"
     tools:context=".ui.main.MainFragment">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#B3FFFFFF"
+        android:elevation="1dp"
+        android:gravity="center|clip_vertical|center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Switch
+            android:id="@+id/sAutoIsoShutter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/colorAccent"
+            android:elevation="1dp"
+            android:padding="0dp"
+            android:paddingEnd="4dp"
+            android:text="AE" />
+
+        <Switch
+            android:id="@+id/sAF"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="0dp"
+            android:paddingEnd="4dp"
+            android:text="AF" />
+
+        <Switch
+            android:id="@+id/sAutoWB"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="0dp"
+            android:paddingEnd="4dp"
+            android:text="AWB" />
+
+        <Switch
+            android:id="@+id/sFlash"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:padding="0dp"
+            android:paddingEnd="4dp"
+            android:text="Flash" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvFrameDuration"
@@ -27,8 +78,8 @@
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="100"
-        app:isb_show_thumb_text="true"
         app:isb_show_indicator="none"
+        app:isb_show_thumb_text="true"
         app:layout_constraintBottom_toBottomOf="@+id/tvFrameDuration"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -55,8 +106,8 @@
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="18"
-        app:isb_show_thumb_text="true"
         app:isb_show_indicator="none"
+        app:isb_show_thumb_text="true"
         app:layout_constraintBottom_toBottomOf="@+id/tvExposure"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -83,8 +134,8 @@
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="100"
-        app:isb_show_thumb_text="true"
         app:isb_show_indicator="none"
+        app:isb_show_thumb_text="true"
         app:layout_constraintBottom_toBottomOf="@+id/tvWB"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -111,8 +162,8 @@
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="10"
-        app:isb_show_thumb_text="true"
         app:isb_show_indicator="none"
+        app:isb_show_thumb_text="true"
         app:layout_constraintBottom_toBottomOf="@+id/tvFocus"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -139,8 +190,8 @@
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="6400"
-        app:isb_show_thumb_text="true"
         app:isb_show_indicator="none"
+        app:isb_show_thumb_text="true"
         app:layout_constraintBottom_toBottomOf="@+id/tvISO"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

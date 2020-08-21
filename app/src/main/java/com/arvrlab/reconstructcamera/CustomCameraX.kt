@@ -56,7 +56,11 @@ class CustomCameraX {
         .reversed()
     val maxShutter = MutableLiveData<Int>()
     val shutter = MutableLiveData<Int>(0)
-
+    //Auto switch
+    val autoWB = MutableLiveData<Boolean>(false)
+    val autoExposition = MutableLiveData<Boolean>(false)
+    val autoFocus = MutableLiveData<Boolean>(false)
+    val flash = MutableLiveData<Boolean>(false)
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
         mainExecutor = ContextCompat.getMainExecutor(context)
@@ -186,26 +190,35 @@ class CustomCameraX {
         it.setTargetRotation(rotation)
 
         Camera2Interop.Extender(it).apply {
-            //Turn on Manual control
-            setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
-            setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
-            setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
-            setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_MODE, CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX);
             // adjust WB using seekbar's params
-            setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_GAINS, colorTemperature(wb.value!!))
+            if (autoWB.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_AUTO)
+            else {
+                setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
+                setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_MODE, CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX)
+                setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_GAINS, colorTemperature(wb.value!!))
+            }
             // abjust FOCUS using seekbar's params
-            setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
-            // abjust ISO using seekbar's params
-            setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
-            /** If we disabling auto-exposure, we need to set the exposure time, in addition to the sensitivity.
-            You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
-            // abjust Exposure using seekbar's params
-            val frameDuraton = ((1.0/60) * 1000)
-            val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
-            //errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${shutter.value!!}")
-            setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
-            // abjust FPS using seekbar's params
-            //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuraton.toNanoSecond()) // 60FPS
+            if (autoFocus.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            else {
+                setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+                setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
+            }
+            // abjust ISO\Shutter using seekbar's params
+            if (autoExposition.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON)
+            else {
+                /** If we disabling auto-exposure, we need to set the exposure time, in addition to the sensitivity.
+                You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
+                setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+                setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
+
+                // abjust Exposure using seekbar's params
+                val frameDuraton = ((1.0 / 60) * 1000)
+                val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
+                setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
+                // abjust FPS using seekbar's params
+                // errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${shutter.value!!}")
+                //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuraton.toNanoSecond()) // 60FPS
+            }
         }
 
         it.build()
