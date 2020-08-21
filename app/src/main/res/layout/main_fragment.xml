@@ -25,7 +25,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/colorAccent"
+            android:checked="true"
             android:elevation="1dp"
+            android:enabled="true"
             android:padding="0dp"
             android:paddingEnd="4dp"
             android:text="AE" />
@@ -35,6 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:checked="true"
             android:padding="0dp"
             android:paddingEnd="4dp"
             android:text="AF" />
@@ -44,6 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:checked="true"
             android:padding="0dp"
             android:paddingEnd="4dp"
             android:text="AWB" />
@@ -53,6 +57,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:checked="false"
             android:padding="0dp"
             android:paddingEnd="4dp"
             android:text="Flash" />
@@ -66,6 +71,7 @@
         android:elevation="1dp"
         android:gravity="center"
         android:text="FD"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/tvExposure"
         app:layout_constraintEnd_toStartOf="@+id/sbFrameDuration"
         app:layout_constraintHorizontal_bias="0.5"
@@ -78,6 +84,7 @@
         android:layout_marginEnd="8dp"
         android:elevation="1dp"
         android:max="100"
+        android:visibility="gone"
         app:isb_show_indicator="none"
         app:isb_show_thumb_text="true"
         app:layout_constraintBottom_toBottomOf="@+id/tvFrameDuration"

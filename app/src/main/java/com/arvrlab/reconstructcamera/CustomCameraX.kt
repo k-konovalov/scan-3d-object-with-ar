@@ -57,9 +57,9 @@ class CustomCameraX {
     val maxShutter = MutableLiveData<Int>()
     val shutter = MutableLiveData<Int>(0)
     //Auto switch
-    val autoWB = MutableLiveData<Boolean>(false)
-    val autoExposition = MutableLiveData<Boolean>(false)
-    val autoFocus = MutableLiveData<Boolean>(false)
+    val autoWB = MutableLiveData<Boolean>(true)
+    val autoExposition = MutableLiveData<Boolean>(true)
+    val autoFocus = MutableLiveData<Boolean>(true)
     val flash = MutableLiveData<Boolean>(false)
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
@@ -190,6 +190,8 @@ class CustomCameraX {
         it.setTargetRotation(rotation)
 
         Camera2Interop.Extender(it).apply {
+            if(flash.value!!)setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_TORCH)
+            else setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF)
             // adjust WB using seekbar's params
             if (autoWB.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_AUTO)
             else {

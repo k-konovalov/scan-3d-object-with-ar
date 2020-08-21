@@ -108,6 +108,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             autoExposition.observe(viewLifecycleOwner, observerForCameraChange)
             autoFocus.observe(viewLifecycleOwner, observerForCameraChange)
             autoWB.observe(viewLifecycleOwner, observerForCameraChange)
+            flash.observe(viewLifecycleOwner, observerForCameraChange)
 
             maxFocus.observe(viewLifecycleOwner, Observer { sbFocus.max = it.toFloat() })
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it.toFloat() })
