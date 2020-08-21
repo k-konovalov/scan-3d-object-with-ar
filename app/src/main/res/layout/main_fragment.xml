@@ -9,11 +9,11 @@
     tools:context=".ui.main.MainFragment">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="#B3FFFFFF"
         android:elevation="1dp"
-        android:gravity="center|clip_vertical|center_vertical"
+        android:gravity="center"
         android:orientation="horizontal"
         android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -30,7 +30,8 @@
             android:enabled="true"
             android:padding="0dp"
             android:paddingEnd="4dp"
-            android:text="AE" />
+            android:text="AE"
+            android:textAlignment="center" />
 
         <Switch
             android:id="@+id/sAF"
@@ -40,7 +41,8 @@
             android:checked="true"
             android:padding="0dp"
             android:paddingEnd="4dp"
-            android:text="AF" />
+            android:text="AF"
+            android:textAlignment="center" />
 
         <Switch
             android:id="@+id/sAutoWB"
@@ -50,7 +52,8 @@
             android:checked="true"
             android:padding="0dp"
             android:paddingEnd="4dp"
-            android:text="AWB" />
+            android:text="AWB"
+            android:textAlignment="center" />
 
         <Switch
             android:id="@+id/sFlash"
@@ -60,7 +63,8 @@
             android:checked="false"
             android:padding="0dp"
             android:paddingEnd="4dp"
-            android:text="Flash" />
+            android:text="Flash"
+            android:textAlignment="center" />
     </LinearLayout>
 
     <TextView
