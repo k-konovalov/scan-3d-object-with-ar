@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.arvrlab.reconstructcamera.CustomCameraX
 import com.arvrlab.reconstructcamera.R
@@ -16,6 +17,7 @@ import com.warkiz.widget.SeekParams
 import kotlinx.android.synthetic.main.main_fragment.*
 
 class MainFragment : Fragment(R.layout.main_fragment) {
+    val viewModel: MainViewModel by viewModels()
     val cameraX = CustomCameraX()
     val permissions = arrayOf("android.permission.CAMERA")
 

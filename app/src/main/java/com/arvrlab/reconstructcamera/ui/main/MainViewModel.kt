@@ -1,4 +1,4 @@
-package com.arvrlab.reconstructcamera
+package com.arvrlab.reconstructcamera.ui.main
 
 import androidx.lifecycle.ViewModel
 
