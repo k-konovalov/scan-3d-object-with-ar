@@ -209,6 +209,7 @@
         app:layout_constraintStart_toEndOf="@+id/tvISO"
         app:layout_constraintTop_toTopOf="@+id/tvISO" />
 
+
     <androidx.camera.view.PreviewView
         android:id="@+id/pvPreview"
         android:layout_width="match_parent"
@@ -219,5 +220,17 @@
         tools:layout_editor_absoluteY="136dp">
 
     </androidx.camera.view.PreviewView>
+
+    <ImageButton
+        android:id="@+id/fabTakePicture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:padding="16dp"
+        android:src="@drawable/ic_take_picture"
+        app:layout_constraintBottom_toTopOf="@id/sbShutter"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="ContentDescription" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

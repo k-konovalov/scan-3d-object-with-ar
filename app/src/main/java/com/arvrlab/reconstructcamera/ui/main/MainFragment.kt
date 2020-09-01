@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -15,11 +16,22 @@ import com.warkiz.widget.IndicatorSeekBar
 import com.warkiz.widget.OnSeekChangeListener
 import com.warkiz.widget.SeekParams
 import kotlinx.android.synthetic.main.main_fragment.*
+import java.io.File
 
 class MainFragment : Fragment(R.layout.main_fragment) {
     val viewModel: MainViewModel by viewModels()
     val cameraX = CustomCameraX()
     val permissions = arrayOf("android.permission.CAMERA")
+
+    private val outputDirectory: File by lazy { getOutputDir() }
+
+    private fun getOutputDir() : File {
+        val mediaDir = requireActivity().externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+        }
+        return if(mediaDir != null && mediaDir.exists()) mediaDir
+        else requireActivity().filesDir
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -30,6 +42,10 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         initCameraXObservers()
         initSeekbarsListeners()
         initSwitchListeners()
+
+        fabTakePicture.setOnClickListener {
+            cameraX.takePhoto(outputDirectory, requireContext())
+        }
     }
 
     private fun initSeekbarsListeners(){

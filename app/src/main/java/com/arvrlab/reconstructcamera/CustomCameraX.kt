@@ -6,9 +6,11 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
+import android.net.Uri
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
+import android.widget.Toast
 import androidx.camera.camera2.interop.Camera2Interop
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -17,6 +19,9 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import com.google.common.util.concurrent.ListenableFuture
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import kotlin.math.abs
@@ -61,6 +66,8 @@ class CustomCameraX {
     val autoExposition = MutableLiveData<Boolean>(true)
     val autoFocus = MutableLiveData<Boolean>(true)
     val flash = MutableLiveData<Boolean>(false)
+
+    private  val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
         mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
@@ -241,7 +248,7 @@ class CustomCameraX {
         try {
             // A variable number of use-cases can be passed here - camera provides access to CameraControl & CameraInfo
             camera = cameraProvider?.bindToLifecycle(
-                viewLifecycleOwner, cameraSelector, preview//, imageCapture
+                viewLifecycleOwner, cameraSelector, preview, imageCapture
             )
 
             val captureSize = imageCapture?.attachedSurfaceResolution ?: Size(0, 0)
@@ -277,4 +284,22 @@ class CustomCameraX {
     private fun Int.toNanoSecond(): Long = (this * million()) // MS -> NS
     private fun Double.toNanoSecond(): Long = (this * million()).toLong()
     private fun million() = (1 * 1000 * 1000L)
+
+    fun takePhoto(outputDirectory: File, context: Context) {
+        val photoFile = File(outputDirectory, SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) + ".DNG")
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
+            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                val savedUri = Uri.fromFile(photoFile)
+                val msg = "Photo capture succeeded: $savedUri"
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                Log.d(TAG, msg)
+            }
+
+            override fun onError(exception: ImageCaptureException) {
+                Log.e(TAG, "Photo capture failed: ${exception.message}", exception)
+            }
+        })
+    }
 }
