@@ -112,7 +112,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
     private fun initCameraXObservers(){
         val observerForCameraChange = Observer<Any> { _ ->
-            pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
+            pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView) }
         }
 
         cameraX.run {
@@ -146,7 +146,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         permissions.forEachIndexed { index, s ->
             if (s == permissions[index] && grantResults[index] == PackageManager.PERMISSION_GRANTED)
-                pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView, requireContext()) }
+                pvPreview.doOnLayout { cameraX.initCamera(viewLifecycleOwner, it as PreviewView) }
         }
     }
 }
