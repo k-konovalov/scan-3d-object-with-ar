@@ -4,7 +4,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -42,11 +41,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         initCameraXObservers()
         initSeekbarsListeners()
         initSwitchListeners()
-
-        fabTakePicture.setOnClickListener {
-            cameraX.takePhoto(outputDirectory, requireContext())
-        }
+        initOnClickListeners()
     }
+
 
     private fun initSeekbarsListeners(){
         sbWb.onSeekChangeListener = object : OnSeekChangeListener{
@@ -107,6 +104,17 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         sFlash.setOnCheckedChangeListener { _, isChecked ->
             if(isChecked) cameraX.flash.postValue(true)
             else cameraX.flash.postValue(false)
+        }
+    }
+
+    private fun initOnClickListeners() {
+        fabTakePicture.setOnClickListener {
+            cameraX.takePhoto(outputDirectory, requireContext())
+        }
+        btnStartTimer.setOnClickListener {
+            if (etDelayBetweenPhoto.text.isNotEmpty() && etNumberOfPhotos.text.isNotEmpty())
+                cameraX.initPhotoTimer(requireContext(),etDelayBetweenPhoto.text.toString().toLong(), etNumberOfPhotos.text.toString().toLong() ,outputDirectory)
+            else Toast.makeText(requireContext(),"Timer settings is empty?", Toast.LENGTH_SHORT).show()
         }
     }
 
