@@ -1,5 +1,6 @@
 package com.arvrlab.reconstructcamera
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
@@ -195,8 +196,22 @@ class CustomCameraX {
         it.setTargetAspectRatio(screenAspectRatio)
         //it.setTargetResolution(custoMSize)
         it.setTargetRotation(rotation)
+        attachSettingsTo(it)
 
-        Camera2Interop.Extender(it).apply {
+        it.build()
+    }
+
+    private fun setupAndBuildImageCapture(screenAspectRatio: Int, rotation: Int) = ImageCapture.Builder().let {
+        it.setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+        it.setTargetAspectRatio(screenAspectRatio)
+        it.setTargetRotation(rotation)
+        it.setFlashMode(if (flash.value!!) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
+        attachSettingsTo(it)
+        it.build()
+    }
+
+    private fun attachSettingsTo(useCaseBuilder: Any){
+        Camera2Interop.Extender(useCaseBuilder as ExtendableBuilder<*>).run {
             if(flash.value!!)setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_TORCH)
             else setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF)
             // adjust WB using seekbar's params
@@ -221,25 +236,13 @@ class CustomCameraX {
                 setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
 
                 // abjust Exposure using seekbar's params
-                val frameDuraton = ((1.0 / 60) * 1000)
                 val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
                 setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
-                // abjust FPS using seekbar's params
-                // errorMessage.postValue("Frame Dur: ${frameDuraton.toShort()} ShutterSpeed: $evChoice with id ${shutter.value!!}")
-                //setCaptureRequestOption(CaptureRequest.SENSOR_FRAME_DURATION, frameDuraton.toNanoSecond()) // 60FPS
             }
         }
-
-        it.build()
     }
 
-    private fun setupAndBuildImageCapture(screenAspectRatio: Int, rotation: Int) = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-            .setTargetAspectRatio(screenAspectRatio)
-            .setTargetRotation(rotation)
-            .setFlashMode(if(flash.value!!) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
-            .build()
-
+    @SuppressLint("RestrictedApi")
     private fun bindCamera(
         viewLifecycleOwner: LifecycleOwner,
         internalCameraView: PreviewView,
