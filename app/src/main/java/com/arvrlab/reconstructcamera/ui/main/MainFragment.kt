@@ -4,7 +4,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -21,7 +20,7 @@ import java.io.File
 class MainFragment : Fragment(R.layout.main_fragment) {
     val viewModel: MainViewModel by viewModels()
     val cameraX = CustomCameraX()
-    val permissions = arrayOf("android.permission.CAMERA")
+    val permissions = arrayOf("android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE")
 
     private val outputDirectory: File by lazy { getOutputDir() }
 
