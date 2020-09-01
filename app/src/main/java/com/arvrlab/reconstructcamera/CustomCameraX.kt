@@ -1,13 +1,18 @@
 package com.arvrlab.reconstructcamera
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.Size
@@ -57,7 +62,27 @@ class CustomCameraX {
     val maxIso = MutableLiveData<Int>()
     val frameDuration = MutableLiveData<Int>()
     val maxFrameDuration = MutableLiveData<Long>()
-    var shutterSpeeds = listOf(30.0, 15.0, 8.0, 4.0, 2.0, 1.0, 1.0/2, 1.0/4, 1.0/8, 1.0/15, 1.0/30, 1.0/60, 1.0/125, 1.0/250, 1.0/500, 1.0/1000, 1.0/2000, 1.0/4000, 1.0/8000)
+    var shutterSpeeds = listOf(
+        30.0,
+        15.0,
+        8.0,
+        4.0,
+        2.0,
+        1.0,
+        1.0 / 2,
+        1.0 / 4,
+        1.0 / 8,
+        1.0 / 15,
+        1.0 / 30,
+        1.0 / 60,
+        1.0 / 125,
+        1.0 / 250,
+        1.0 / 500,
+        1.0 / 1000,
+        1.0 / 2000,
+        1.0 / 4000,
+        1.0 / 8000
+    )
         .filter { it < 1.0 } // less than second
         .reversed()
     val maxShutter = MutableLiveData<Int>()
@@ -97,7 +122,7 @@ class CustomCameraX {
 
     fun logAndSetupAvailableCameraSettings(context: Context){
         val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        cameraManager.cameraIdList.forEach {id ->
+        cameraManager.cameraIdList.forEach { id ->
             var cameraLog = "Camera $id:"
             val cameraCharacteristics = cameraManager.getCameraCharacteristics(id)
             val facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING)
@@ -171,7 +196,7 @@ class CustomCameraX {
         internalCameraView: PreviewView,
         viewLifecycleOwner: LifecycleOwner
     ) = Runnable {
-        val custoMSize = Size(1920,1080)
+        val custoMSize = Size(1920, 1080)
 
         cameraProvider = cameraProviderFuture.get()
         cameraProvider?.unbindAll() // Must unbind the use-cases before rebinding them.
@@ -189,7 +214,7 @@ class CustomCameraX {
         log += "\nISO: ${iso.value}"
         log += "\nShutter: ${shutter.value}ms"
         //log += "\nFrame Duration: ${frameDuration.value}ms"
-        Log.e (TAG, log)
+        Log.e(TAG, log)
     }
 
     private fun setupAndBuildPreview(custoMSize: Size, rotation: Int, screenAspectRatio: Int): Preview = Preview.Builder().let {
@@ -212,32 +237,62 @@ class CustomCameraX {
 
     private fun attachSettingsTo(useCaseBuilder: Any){
         Camera2Interop.Extender(useCaseBuilder as ExtendableBuilder<*>).run {
-            if(flash.value!!)setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_TORCH)
+            if(flash.value!!)setCaptureRequestOption(
+                CaptureRequest.FLASH_MODE,
+                CameraMetadata.FLASH_MODE_TORCH
+            )
             else setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF)
             // adjust WB using seekbar's params
-            if (autoWB.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_AUTO)
+            if (autoWB.value!!) setCaptureRequestOption(
+                CaptureRequest.CONTROL_AWB_MODE,
+                CameraMetadata.CONTROL_AWB_MODE_AUTO
+            )
             else {
-                setCaptureRequestOption(CaptureRequest.CONTROL_AWB_MODE, CameraMetadata.CONTROL_AWB_MODE_OFF)
-                setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_MODE, CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX)
-                setCaptureRequestOption(CaptureRequest.COLOR_CORRECTION_GAINS, colorTemperature(wb.value!!))
+                setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AWB_MODE,
+                    CameraMetadata.CONTROL_AWB_MODE_OFF
+                )
+                setCaptureRequestOption(
+                    CaptureRequest.COLOR_CORRECTION_MODE,
+                    CaptureRequest.COLOR_CORRECTION_MODE_TRANSFORM_MATRIX
+                )
+                setCaptureRequestOption(
+                    CaptureRequest.COLOR_CORRECTION_GAINS,
+                    colorTemperature(wb.value!!)
+                )
             }
             // abjust FOCUS using seekbar's params
-            if (autoFocus.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+            if (autoFocus.value!!) setCaptureRequestOption(
+                CaptureRequest.CONTROL_AF_MODE,
+                CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO
+            )
             else {
-                setCaptureRequestOption(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_OFF)
+                setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AF_MODE,
+                    CameraMetadata.CONTROL_AF_MODE_OFF
+                )
                 setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
             }
             // abjust ISO\Shutter using seekbar's params
-            if (autoExposition.value!!) setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_ON)
+            if (autoExposition.value!!) setCaptureRequestOption(
+                CaptureRequest.CONTROL_AE_MODE,
+                CameraMetadata.CONTROL_AE_MODE_ON
+            )
             else {
                 /** If we disabling auto-exposure, we need to set the exposure time, in addition to the sensitivity.
                 You also preferably need to set the frame duration, though the defaults for both are probably 1/30s */
-                setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+                setCaptureRequestOption(
+                    CaptureRequest.CONTROL_AE_MODE,
+                    CameraMetadata.CONTROL_AE_MODE_OFF
+                )
                 setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
 
                 // abjust Exposure using seekbar's params
                 val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
-                setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
+                setCaptureRequestOption(
+                    CaptureRequest.SENSOR_EXPOSURE_TIME,
+                    evChoice.toNanoSecond()
+                ) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
             }
         }
     }
@@ -258,7 +313,10 @@ class CustomCameraX {
             val previewSize = preview?.attachedSurfaceResolution ?: Size(0, 0)
             val analyzeSize = imageAnalyzer?.attachedSurfaceResolution ?: Size(0, 0)
 
-            Log.e(TAG, "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize")
+            Log.e(
+                TAG,
+                "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize"
+            )
             //internalCameraView.getPreferredImplementationMode() = PreviewView.ImplementationMode.TEXTURE_VIEW
             preview?.setSurfaceProvider(internalCameraView.createSurfaceProvider())
         } catch (exc: Exception) {
@@ -289,20 +347,60 @@ class CustomCameraX {
     private fun million() = (1 * 1000 * 1000L)
 
     fun takePhoto(outputDirectory: File, context: Context) {
-        val photoFile = File(outputDirectory, SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) + ".DNG")
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+        val fileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
+        val photoFile = File(outputDirectory, fileName)
+        val outputOptions = getOutputFileOptions(context, photoFile)
 
         imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
-            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                val savedUri = Uri.fromFile(photoFile)
-                val msg = "Photo capture succeeded: $savedUri"
-                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                Log.d(TAG, msg)
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    Toast.makeText(context, "Photo capture succeeded", Toast.LENGTH_SHORT).show()
+                    replaceImageInPictureDir(context, fileName, photoFile)
+                }
+
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exception.message}", exception)
+                }
+            })
+    }
+
+    private fun getOutputFileOptions(context: Context, photoFile: File): ImageCapture.OutputFileOptions {
+        val contentValues = getContentValues(photoFile.name, context)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            ImageCapture.OutputFileOptions.Builder(
+                context.contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
+                .build() else ImageCapture.OutputFileOptions.Builder(photoFile).build()
+    }
+
+    private fun getContentValues(fileName: String?, context: Context): ContentValues {
+        return ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/${context.getString(R.string.app_name)}")
+                put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
+            }
+        }
+    }
+
+    private fun replaceImageInPictureDir(context: Context, fileName: String?, photoFile: File) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).path + "/${context.getString(R.string.app_name)}"
+            val photo = File.createTempFile("JPEG_${fileName}_", ".jpg", File(storageDir).apply { mkdirs() })
+
+            photoFile.run {
+                copyTo(photo, true)
+                delete()
             }
 
-            override fun onError(exception: ImageCaptureException) {
-                Log.e(TAG, "Photo capture failed: ${exception.message}", exception)
-            }
-        })
+            Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                .apply { data = Uri.fromFile(photo) }
+                .let {
+                    context.sendBroadcast(it)
+                }
+        }
     }
 }
