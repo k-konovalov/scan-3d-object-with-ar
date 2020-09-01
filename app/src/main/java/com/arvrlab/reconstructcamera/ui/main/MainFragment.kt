@@ -20,7 +20,7 @@ import java.io.File
 class MainFragment : Fragment(R.layout.main_fragment) {
     val viewModel: MainViewModel by viewModels()
     val cameraX = CustomCameraX()
-    val permissions = arrayOf("android.permission.CAMERA")
+    val permissions = arrayOf("android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE")
 
     private val outputDirectory: File by lazy { getOutputDir() }
 
