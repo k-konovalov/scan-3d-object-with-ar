@@ -10,6 +10,7 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.net.Uri
+import android.os.CountDownTimer
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -94,6 +95,34 @@ class CustomCameraX {
     val flash = MutableLiveData<Boolean>(false)
 
     private  val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+
+    //timer
+    private var photoTimer: CountDownTimer? = null
+    private var isPhotoTimerWork = false
+    private val SECOND = 1000L
+
+    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long, outputDirectory: File){
+        val totalTimeForOnePhotoSeries = numPhotos * interval
+        Toast.makeText(context,"Timer set with interval $interval & numPhotos: $numPhotos:", Toast.LENGTH_SHORT).show()
+        photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
+            override fun onTick(p0: Long) {
+                takePhoto(outputDirectory, context)
+            }
+
+            override fun onFinish() {
+                isPhotoTimerWork = false
+                Toast.makeText(context,"Capture series over", Toast.LENGTH_SHORT).show()
+            }
+        }
+        if(isPhotoTimerWork) {
+            isPhotoTimerWork = !isPhotoTimerWork
+            photoTimer?.onFinish()
+        }
+        else {
+            isPhotoTimerWork = !isPhotoTimerWork
+            photoTimer?.start()
+        }
+    }
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
         mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
