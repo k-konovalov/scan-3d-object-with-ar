@@ -62,8 +62,8 @@ class CustomCameraX {
     val autoFocus = MutableLiveData<Boolean>(true)
     val flash = MutableLiveData<Boolean>(false)
 
-    fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView, context: Context) {
-        mainExecutor = ContextCompat.getMainExecutor(context)
+    fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
+        mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = DisplayMetrics().also { internalCameraView.display.getRealMetrics(it) }
         val screenAspectRatio = aspectRatio(metrics.widthPixels, metrics.heightPixels)
@@ -74,7 +74,7 @@ class CustomCameraX {
 
         val cameraSelector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
         // Bind the CameraProvider to the LifeCycleOwner
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(internalCameraView.context)
         cameraProviderFuture.addListener(
             futureListener(
                 cameraProviderFuture,
@@ -230,6 +230,7 @@ class CustomCameraX {
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
             .setTargetAspectRatio(screenAspectRatio)
             .setTargetRotation(rotation)
+            .setFlashMode(if(flash.value!!) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
             .build()
 
     private fun bindCamera(
@@ -248,7 +249,7 @@ class CustomCameraX {
             val analyzeSize = imageAnalyzer?.attachedSurfaceResolution ?: Size(0, 0)
 
             Log.e(TAG, "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize")
-            internalCameraView.preferredImplementationMode = PreviewView.ImplementationMode.TEXTURE_VIEW
+            //internalCameraView.getPreferredImplementationMode() = PreviewView.ImplementationMode.TEXTURE_VIEW
             preview?.setSurfaceProvider(internalCameraView.createSurfaceProvider())
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
