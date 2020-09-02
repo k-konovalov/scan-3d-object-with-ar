@@ -1,8 +1,8 @@
 package com.arvrlab.reconstructcamera.scenario
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -11,18 +11,11 @@ import androidx.lifecycle.Observer
 import com.arvrlab.reconstructcamera.R
 import com.arvrlab.reconstructcamera.SingleViewModel
 import kotlinx.android.synthetic.main.main_activity.*
-import kotlinx.android.synthetic.main.scenario_fragment.btnStartTimer
-import kotlinx.android.synthetic.main.scenario_fragment.etDelayBetweenPhoto
-import kotlinx.android.synthetic.main.scenario_fragment.etNumberOfPhotos
-import kotlinx.android.synthetic.main.scenario_fragment.fabTakePicture
-import kotlinx.android.synthetic.main.scenario_fragment.sAF
-import kotlinx.android.synthetic.main.scenario_fragment.sAutoIsoShutter
-import kotlinx.android.synthetic.main.scenario_fragment.sAutoWB
-import kotlinx.android.synthetic.main.scenario_fragment.sFlash
+import kotlinx.android.synthetic.main.scenario_fragment.*
 
 class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 
-    private val singleViewModel : SingleViewModel by activityViewModels()
+    private val singleViewModel: SingleViewModel by activityViewModels()
     private val activityContext by lazy { requireActivity() }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -33,9 +26,14 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         initOnClickListeners()
     }
 
-    private fun initCameraXObservers(){
+    private fun initCameraXObservers() {
         val observerForCameraChange = Observer<Any> { _ ->
-            activityContext.pvPreview.doOnLayout { singleViewModel.cameraX.initCamera(activityContext, it as PreviewView) }
+            activityContext.pvPreview.doOnLayout {
+                singleViewModel.cameraX.initCamera(
+                    activityContext,
+                    it as PreviewView
+                )
+            }
         }
 
         singleViewModel.cameraX.run {
@@ -60,19 +58,19 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 
     private fun initSwitchListeners() {
         sAF.setOnCheckedChangeListener { _, isChecked ->
-            if(isChecked) singleViewModel.cameraX.autoFocus.postValue(true)
+            if (isChecked) singleViewModel.cameraX.autoFocus.postValue(true)
             else singleViewModel.cameraX.autoFocus.postValue(false)
         }
         sAutoIsoShutter.setOnCheckedChangeListener { _, isChecked ->
-            if(isChecked) singleViewModel.cameraX.autoExposition.postValue(true)
+            if (isChecked) singleViewModel.cameraX.autoExposition.postValue(true)
             else singleViewModel.cameraX.autoExposition.postValue(false)
         }
         sAutoWB.setOnCheckedChangeListener { _, isChecked ->
-            if(isChecked) singleViewModel.cameraX.autoWB.postValue(true)
+            if (isChecked) singleViewModel.cameraX.autoWB.postValue(true)
             else singleViewModel.cameraX.autoWB.postValue(false)
         }
         sFlash.setOnCheckedChangeListener { _, isChecked ->
-            if(isChecked) singleViewModel.cameraX.flash.postValue(true)
+            if (isChecked) singleViewModel.cameraX.flash.postValue(true)
             else singleViewModel.cameraX.flash.postValue(false)
         }
     }
@@ -80,6 +78,20 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
             singleViewModel.cameraX.takePhoto(requireContext())
+        }
+
+        fabFirstPhoto.setOnClickListener {
+            SetParamsDialogFragment(singleViewModel.cameraX.shutterSpeeds) { params ->
+                //TODO(params) получены параметры для первого фото
+                Log.d("SetParamsDialogFragment", params.toString())
+            }.show(parentFragmentManager, "setParamsDialog")
+
+            fabLastPhoto.setOnClickListener {
+                SetParamsDialogFragment(singleViewModel.cameraX.shutterSpeeds) { params ->
+                    //TODO(params) получены параметры для последнего фото
+                    Log.d("SetParamsDialogFragment", params.toString())
+                }.show(parentFragmentManager, "setParamsDialog")
+            }
         }
     }
 }
