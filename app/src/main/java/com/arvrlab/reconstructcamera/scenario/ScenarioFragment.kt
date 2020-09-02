@@ -1,8 +1,8 @@
 package com.arvrlab.reconstructcamera.scenario
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -11,14 +11,7 @@ import androidx.lifecycle.Observer
 import com.arvrlab.reconstructcamera.R
 import com.arvrlab.reconstructcamera.SingleViewModel
 import kotlinx.android.synthetic.main.main_activity.*
-import kotlinx.android.synthetic.main.scenario_fragment.btnStartTimer
-import kotlinx.android.synthetic.main.scenario_fragment.etDelayBetweenPhoto
-import kotlinx.android.synthetic.main.scenario_fragment.etNumberOfPhotos
-import kotlinx.android.synthetic.main.scenario_fragment.fabTakePicture
-import kotlinx.android.synthetic.main.scenario_fragment.sAF
-import kotlinx.android.synthetic.main.scenario_fragment.sAutoIsoShutter
-import kotlinx.android.synthetic.main.scenario_fragment.sAutoWB
-import kotlinx.android.synthetic.main.scenario_fragment.sFlash
+import kotlinx.android.synthetic.main.scenario_fragment.*
 
 class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 
@@ -80,6 +73,20 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
             singleViewModel.cameraX.takePhoto(requireContext())
+        }
+
+        fabFirstPhoto.setOnClickListener {
+            SetParamsDialogFragment { params ->
+              //TODO(params) получены параметры для первого фото
+                Log.d("SetParamsDialogFragment", params.toString())
+            }.show(parentFragmentManager, "setParamsDialog")
+        }
+
+        fabLastPhoto.setOnClickListener {
+            SetParamsDialogFragment { params ->
+                //TODO(params) получены параметры для последнего фото
+                Log.d("SetParamsDialogFragment", params.toString())
+            }.show(parentFragmentManager, "setParamsDialog")
         }
     }
 }
