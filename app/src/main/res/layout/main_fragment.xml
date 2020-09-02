@@ -250,17 +250,6 @@
         app:layout_constraintTop_toTopOf="@+id/tvISO" />
 
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/pvPreview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="0dp"
-        android:visibility="visible"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="136dp">
-
-    </androidx.camera.view.PreviewView>
-
     <ImageButton
         android:id="@+id/fabTakePicture"
         android:layout_width="wrap_content"
