@@ -163,7 +163,7 @@ class CustomCameraX {
                     val isCameraSupportFullCapabilities =
                         (this == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
                     if (isCameraSupportFullCapabilities) cameraLog += "\nHardwareLevel Full: $isCameraSupportFullCapabilities"
-                    else { errorMessage.postValue("Warning: This camera on device doesn't support full capabilities") }
+                    else if((facing == CameraSelector.LENS_FACING_BACK)) errorMessage.postValue("Warning: Back camera on device doesn't support full capabilities")
                 }
             //AE
             cameraCharacteristics
@@ -382,8 +382,8 @@ class CustomCameraX {
 
         imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    Toast.makeText(context, "Photo capture succeeded", Toast.LENGTH_SHORT).show()
                     replaceImageInPictureDir(context, fileName, photoFile)
+                    Toast.makeText(context, "Photo captured to\n/${Environment.DIRECTORY_PICTURES}/${context.getString(R.string.app_name)}/$fileName", Toast.LENGTH_SHORT).show()
                 }
 
                 override fun onError(exception: ImageCaptureException) {
