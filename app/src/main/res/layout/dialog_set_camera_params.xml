@@ -18,35 +18,100 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Spinner
+    <TextView
+        android:textSize="20sp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:id="@+id/tvShutter"
         app:layout_constraintTop_toBottomOf="@+id/tvSetParams"
-        android:id="@+id/spinnerShutter"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Shutter:"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <Spinner
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@id/tvShutter"
+        app:layout_constraintTop_toTopOf="@id/tvShutter"
+        android:id="@+id/spinnerShutter"
+        app:layout_constraintStart_toEndOf="@id/tvShutter"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        />
+
+    <TextView
+        android:textSize="20sp"
+        android:layout_marginTop="16dp"
+        android:id="@+id/tvIso"
+        app:layout_constraintTop_toBottomOf="@+id/tvShutter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ISO:"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
         />
 
     <EditText
         android:id="@+id/etIso"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="ISO"
-        app:layout_constraintTop_toBottomOf="@id/spinnerShutter" />
+        android:text="0"
+        android:layout_marginStart="16dp"
+        android:inputType="number"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvIso"
+        app:layout_constraintBottom_toBottomOf="@id/tvIso"
+        app:layout_constraintStart_toEndOf="@id/tvIso"/>
+
+    <TextView
+        android:textSize="20sp"
+        android:layout_marginTop="16dp"
+        android:id="@+id/tvFocus"
+        app:layout_constraintTop_toBottomOf="@+id/tvIso"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Focus:"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        />
 
     <EditText
+        android:inputType="number"
         android:id="@+id/etFocus"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Focus"
-        app:layout_constraintTop_toBottomOf="@id/etIso" />
+        android:text="0"
+        app:layout_constraintTop_toTopOf="@id/tvFocus"
+        app:layout_constraintBottom_toBottomOf="@id/tvFocus"
+        app:layout_constraintStart_toEndOf="@id/tvFocus"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="16dp"/>
+
+    <TextView
+        android:textSize="20sp"
+        android:layout_marginTop="16dp"
+        android:id="@+id/tvWb"
+        app:layout_constraintTop_toBottomOf="@+id/tvFocus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WB:"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintStart_toStartOf="parent"
+        />
 
     <EditText
+        android:inputType="number"
         android:id="@+id/etWB"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="WB"
-        app:layout_constraintTop_toBottomOf="@id/etFocus" />
+        android:text="0"
+        app:layout_constraintStart_toEndOf="@+id/tvWb"
+        app:layout_constraintTop_toTopOf="@+id/tvWb"
+        app:layout_constraintBottom_toBottomOf="@+id/tvWb"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="16dp"/>
 
     <Button
         android:id="@+id/btnCancel"
@@ -67,7 +132,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:backgroundTint="@color/colorAccent"
         android:text="Применить"
