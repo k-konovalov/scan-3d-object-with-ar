@@ -27,6 +27,13 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def flavor = variant.name
+            def versionName = variant.versionName
+            outputFileName = "3D_Reconstruct_Camera_${flavor}_${versionName}.apk"
+        }
+    }
 }
 
 dependencies {

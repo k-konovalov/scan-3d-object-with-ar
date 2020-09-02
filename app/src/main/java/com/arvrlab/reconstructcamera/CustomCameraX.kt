@@ -1,6 +1,7 @@
 package com.arvrlab.reconstructcamera
 
 import android.annotation.SuppressLint
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -10,8 +11,8 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.params.RggbChannelVector
 import android.net.Uri
-import android.os.CountDownTimer
 import android.os.Build
+import android.os.CountDownTimer
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.DisplayMetrics
@@ -25,6 +26,7 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
+import com.arvrlab.reconstructcamera.core.UriFileUtils
 import com.google.common.util.concurrent.ListenableFuture
 import java.io.File
 import java.text.SimpleDateFormat
@@ -101,17 +103,21 @@ class CustomCameraX {
     private var isPhotoTimerWork = false
     private val SECOND = 1000L
 
-    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long, outputDirectory: File){
+    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long){
         val totalTimeForOnePhotoSeries = numPhotos * interval
-        Toast.makeText(context,"Timer set with interval $interval & numPhotos: $numPhotos:", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            "Timer set with interval $interval & numPhotos: $numPhotos:",
+            Toast.LENGTH_SHORT
+        ).show()
         photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
             override fun onTick(p0: Long) {
-                takePhoto(outputDirectory, context)
+                takePhoto(context)
             }
 
             override fun onFinish() {
                 isPhotoTimerWork = false
-                Toast.makeText(context,"Capture series over", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show()
             }
         }
         if(isPhotoTimerWork) {
@@ -163,7 +169,7 @@ class CustomCameraX {
                     val isCameraSupportFullCapabilities =
                         (this == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
                     if (isCameraSupportFullCapabilities) cameraLog += "\nHardwareLevel Full: $isCameraSupportFullCapabilities"
-                    else { errorMessage.postValue("Warning: This camera on device doesn't support full capabilities") }
+                    else if((facing == CameraSelector.LENS_FACING_BACK)) errorMessage.postValue("Warning: Back camera on device doesn't support full capabilities")
                 }
             //AE
             cameraCharacteristics
@@ -375,61 +381,66 @@ class CustomCameraX {
     private fun Double.toNanoSecond(): Long = (this * million()).toLong()
     private fun million() = (1 * 1000 * 1000L)
 
-    fun takePhoto(outputDirectory: File, context: Context) {
+    fun takePhoto(context: Context) {
+        val appName = context.getString(R.string.app_name)
         val fileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
-        val photoFile = File(outputDirectory, fileName)
-        val outputOptions = getOutputFileOptions(context, photoFile)
+        val outputOptions = getOutputFileOptions(context.contentResolver, appName, fileName)
 
-        imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
+        imageCapture?.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    Toast.makeText(context, "Photo capture succeeded", Toast.LENGTH_SHORT).show()
-                    replaceImageInPictureDir(context, fileName, photoFile)
+                    outputFileResults.savedUri?.run {
+                        replaceImageInPictureDir(context, this, appName)
+                    }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    Log.e(TAG, "Photo capture failed: ${exception.message}", exception)
+                    Log.e(TAG, "Photo capture failed", exception)
                 }
             })
     }
 
-    private fun getOutputFileOptions(context: Context, photoFile: File): ImageCapture.OutputFileOptions {
-        val contentValues = getContentValues(photoFile.name, context)
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            ImageCapture.OutputFileOptions.Builder(
-                context.contentResolver,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues
-            )
-                .build() else ImageCapture.OutputFileOptions.Builder(photoFile).build()
-    }
+    private fun getOutputFileOptions(contentResolver: ContentResolver, appName: String, fileName: String): ImageCapture.OutputFileOptions =
+        ImageCapture.OutputFileOptions.Builder(
+            contentResolver,
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            getContentValues(appName, fileName)
+        ).build()
 
-    private fun getContentValues(fileName: String?, context: Context): ContentValues {
-        return ContentValues().apply {
+    private fun getContentValues(appName: String, fileName: String): ContentValues =
+        ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis())
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/${context.getString(R.string.app_name)}")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/$appName")
                 put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
             }
         }
-    }
 
-    private fun replaceImageInPictureDir(context: Context, fileName: String?, photoFile: File) {
+    private fun replaceImageInPictureDir(context: Context, photoFileUri: Uri, appName: String) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            val storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).path + "/${context.getString(R.string.app_name)}"
-            val photo = File.createTempFile("JPEG_${fileName}_", ".jpg", File(storageDir).apply { mkdirs() })
+            val photoFilePath = UriFileUtils.getPath(context, photoFileUri) ?: return
+            val oldPhotoFile = File(photoFilePath)
 
-            photoFile.run {
-                copyTo(photo, true)
+            val newFileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
+            val storageDir = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).path}/$appName"
+            val newPhotoFile = File("$storageDir/$newFileName.${oldPhotoFile.extension}")
+
+            oldPhotoFile.run {
+                copyTo(newPhotoFile, false)
                 delete()
             }
 
-            Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-                .apply { data = Uri.fromFile(photo) }
-                .let {
-                    context.sendBroadcast(it)
-                }
-        }
+            //ToDo: to LiveData
+            Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).run {
+                data = Uri.fromFile(newPhotoFile)
+                context.sendBroadcast(this)
+            }
+
+            Toast.makeText(context, "Photo captured to\n${newPhotoFile.absolutePath}", Toast.LENGTH_SHORT).show()
+        } else Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
     }
 }

@@ -16,21 +16,12 @@ import com.warkiz.widget.OnSeekChangeListener
 import com.warkiz.widget.SeekParams
 import kotlinx.android.synthetic.main.main_activity.*
 import kotlinx.android.synthetic.main.main_fragment.*
-import java.io.File
 
 class MainFragment : Fragment(R.layout.main_fragment) {
+
     private val viewModel: MainViewModel by viewModels()
     private val singleViewModel : SingleViewModel by activityViewModels()
     private val activityContext by lazy { requireActivity() }
-    private val outputDirectory: File by lazy { getOutputDir() }
-
-    private fun getOutputDir() : File {
-        val mediaDir = requireActivity().externalMediaDirs.firstOrNull()?.let {
-            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
-        }
-        return if(mediaDir != null && mediaDir.exists()) mediaDir
-        else activityContext.filesDir
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -105,11 +96,11 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
-            singleViewModel.cameraX.takePhoto(outputDirectory, requireContext())
+            singleViewModel.cameraX.takePhoto(requireContext())
         }
         btnStartTimer.setOnClickListener {
             if (etDelayBetweenPhoto.text.isNotEmpty() && etNumberOfPhotos.text.isNotEmpty())
-                singleViewModel.cameraX.initPhotoTimer(requireContext(),etDelayBetweenPhoto.text.toString().toLong(), etNumberOfPhotos.text.toString().toLong() ,outputDirectory)
+                singleViewModel.cameraX.initPhotoTimer(requireContext(),etDelayBetweenPhoto.text.toString().toLong(), etNumberOfPhotos.text.toString().toLong())
             else Toast.makeText(requireContext(),"Timer settings is empty?", Toast.LENGTH_SHORT).show()
         }
     }
