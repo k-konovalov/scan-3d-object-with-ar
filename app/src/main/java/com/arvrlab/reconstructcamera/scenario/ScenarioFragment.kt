@@ -14,32 +14,31 @@ import kotlinx.android.synthetic.main.main_activity.*
 class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 
     private val singleViewModel : SingleViewModel by activityViewModels()
+    private val activityContext by lazy { requireActivity() }
 
-    override fun onResume() {
-        super.onResume()
-        singleViewModel.cameraX.logAndSetupAvailableCameraSettings(requireContext())
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
         initCameraXObservers()
     }
 
-
     private fun initCameraXObservers(){
         val observerForCameraChange = Observer<Any> { _ ->
-            requireActivity().pvPreview.doOnLayout { singleViewModel.cameraX.initCamera(viewLifecycleOwner, it as PreviewView) }
+            activityContext.pvPreview.doOnLayout { singleViewModel.cameraX.initCamera(activityContext, it as PreviewView) }
         }
 
         singleViewModel.cameraX.run {
-            logAndSetupAvailableCameraSettings(requireContext())
+            logAndSetupAvailableCameraSettings(activityContext)
 
-            wb.observe(viewLifecycleOwner, observerForCameraChange)
-            focus.observe(viewLifecycleOwner, observerForCameraChange)
-            iso.observe(viewLifecycleOwner, observerForCameraChange)
-            shutter.observe(viewLifecycleOwner, observerForCameraChange)
-            frameDuration.observe(viewLifecycleOwner, observerForCameraChange)
-            autoExposition.observe(viewLifecycleOwner, observerForCameraChange)
-            autoFocus.observe(viewLifecycleOwner, observerForCameraChange)
-            autoWB.observe(viewLifecycleOwner, observerForCameraChange)
-            flash.observe(viewLifecycleOwner, observerForCameraChange)
-
+            wb.observe(activityContext, observerForCameraChange)
+            focus.observe(activityContext, observerForCameraChange)
+            iso.observe(activityContext, observerForCameraChange)
+            shutter.observe(activityContext, observerForCameraChange)
+            frameDuration.observe(activityContext, observerForCameraChange)
+            autoExposition.observe(activityContext, observerForCameraChange)
+            autoFocus.observe(activityContext, observerForCameraChange)
+            autoWB.observe(activityContext, observerForCameraChange)
+            flash.observe(activityContext, observerForCameraChange)
         }
     }
 }

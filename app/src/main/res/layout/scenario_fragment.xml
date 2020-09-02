@@ -60,7 +60,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.appcompat.widget.SwitchCompat
+        <Switch
             android:id="@+id/sAutoIsoShutter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -73,7 +73,7 @@
             android:text="AE"
             android:textAlignment="center" />
 
-        <androidx.appcompat.widget.SwitchCompat
+        <Switch
             android:id="@+id/sAF"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
