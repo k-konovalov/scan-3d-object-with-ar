@@ -2,6 +2,7 @@ package com.arvrlab.reconstructcamera.scenario
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -10,6 +11,14 @@ import androidx.lifecycle.Observer
 import com.arvrlab.reconstructcamera.R
 import com.arvrlab.reconstructcamera.SingleViewModel
 import kotlinx.android.synthetic.main.main_activity.*
+import kotlinx.android.synthetic.main.scenario_fragment.btnStartTimer
+import kotlinx.android.synthetic.main.scenario_fragment.etDelayBetweenPhoto
+import kotlinx.android.synthetic.main.scenario_fragment.etNumberOfPhotos
+import kotlinx.android.synthetic.main.scenario_fragment.fabTakePicture
+import kotlinx.android.synthetic.main.scenario_fragment.sAF
+import kotlinx.android.synthetic.main.scenario_fragment.sAutoIsoShutter
+import kotlinx.android.synthetic.main.scenario_fragment.sAutoWB
+import kotlinx.android.synthetic.main.scenario_fragment.sFlash
 
 class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 
@@ -20,6 +29,8 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         super.onViewCreated(view, savedInstanceState)
 
         initCameraXObservers()
+        initSwitchListeners()
+        initOnClickListeners()
     }
 
     private fun initCameraXObservers(){
@@ -28,7 +39,7 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         }
 
         singleViewModel.cameraX.run {
-            logAndSetupAvailableCameraSettings(activityContext)
+            logAndSetupAvailableCameraSettings(requireContext())
 
             wb.observe(activityContext, observerForCameraChange)
             focus.observe(activityContext, observerForCameraChange)
@@ -39,6 +50,36 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
             autoFocus.observe(activityContext, observerForCameraChange)
             autoWB.observe(activityContext, observerForCameraChange)
             flash.observe(activityContext, observerForCameraChange)
+
+            //maxFrameDuration.observe(activityContext, Observer { sbFrameDuration.max =  })
+//            errorMessage.observe(activityContext, Observer {
+//                showToastWith(it)
+//            })
+        }
+    }
+
+    private fun initSwitchListeners() {
+        sAF.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) singleViewModel.cameraX.autoFocus.postValue(true)
+            else singleViewModel.cameraX.autoFocus.postValue(false)
+        }
+        sAutoIsoShutter.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) singleViewModel.cameraX.autoExposition.postValue(true)
+            else singleViewModel.cameraX.autoExposition.postValue(false)
+        }
+        sAutoWB.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) singleViewModel.cameraX.autoWB.postValue(true)
+            else singleViewModel.cameraX.autoWB.postValue(false)
+        }
+        sFlash.setOnCheckedChangeListener { _, isChecked ->
+            if(isChecked) singleViewModel.cameraX.flash.postValue(true)
+            else singleViewModel.cameraX.flash.postValue(false)
+        }
+    }
+
+    private fun initOnClickListeners() {
+        fabTakePicture.setOnClickListener {
+            singleViewModel.cameraX.takePhoto(requireContext())
         }
     }
 }
