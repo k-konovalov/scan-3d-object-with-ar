@@ -1,9 +1,9 @@
 package com.arvrlab.reconstructcamera.ui.main
 
-import android.os.Bundle
-import android.view.View
+import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -21,6 +21,11 @@ import java.io.File
 class MainFragment : Fragment(R.layout.main_fragment) {
     val viewModel: MainViewModel by viewModels()
     val singleViewModel : SingleViewModel by activityViewModels()
+    private val permissions = arrayOf("android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE")
+    private val isPermissionGranted: Boolean
+        get() = ContextCompat.checkSelfPermission(requireActivity(), permissions[0]) ==
+                PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(requireActivity(), permissions[1]) ==
+                PackageManager.PERMISSION_GRANTED
 
     private val outputDirectory: File by lazy { getOutputDir() }
 
@@ -32,17 +37,14 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         else requireActivity().filesDir
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onResume() {
+        super.onResume()
         singleViewModel.cameraX.logAndSetupAvailableCameraSettings(requireContext())
-
         initCameraXObservers()
         initSeekbarsListeners()
         initSwitchListeners()
         initOnClickListeners()
     }
-
 
     private fun initSeekbarsListeners(){
         sbWb.onSeekChangeListener = object : OnSeekChangeListener{
@@ -139,9 +141,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
             maxIso.observe(viewLifecycleOwner, Observer { sbISO.max = it.toFloat() })
             maxShutter.observe(viewLifecycleOwner, Observer { sbShutter.max = it.toFloat()})
             //maxFrameDuration.observe(viewLifecycleOwner, Observer { sbFrameDuration.max =  })
-            errorMessage.observe(viewLifecycleOwner, Observer {
-                showToastWith(it)
-            })
+//            errorMessage.observe(viewLifecycleOwner, Observer {
+//                showToastWith(it)
+//            })
         }
     }
 

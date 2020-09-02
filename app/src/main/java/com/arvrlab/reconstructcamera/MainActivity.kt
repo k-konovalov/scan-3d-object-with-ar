@@ -6,22 +6,32 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
+import androidx.fragment.app.FragmentActivity
 import kotlinx.android.synthetic.main.main_activity.*
 
-class MainActivity : AppCompatActivity(R.layout.main_activity) {
+class MainActivity : FragmentActivity(R.layout.main_activity) {
 
     private val singleViewModel: SingleViewModel by viewModels()
     private val permissions = arrayOf("android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE")
+    private val isPermissionGranted: Boolean
+        get() = ContextCompat.checkSelfPermission(this, permissions[0]) ==
+                PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, permissions[1]) ==
+                PackageManager.PERMISSION_GRANTED
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestPermissions(permissions,0)
+
+        if(isPermissionGranted)
+            pvPreview.doOnLayout { singleViewModel.cameraX.initCamera(this, it as PreviewView) }
+        else
+            requestPermissions(permissions,0)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         viewPager.apply {
-            adapter = ViewPagerAdapterAdapter(supportFragmentManager)
+            adapter = ViewPagerAdapterAdapter(this@MainActivity)
             currentItem = 0
         }
     }
