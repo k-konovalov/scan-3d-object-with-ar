@@ -1,7 +1,6 @@
 package com.arvrlab.reconstructcamera.scenario
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
@@ -81,11 +80,21 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         }
 
         fabFirstPhoto.setOnClickListener {
-            SetParamsDialogFragment(singleViewModel.cameraX.firstPhotoSettings, singleViewModel.cameraX).show(parentFragmentManager, "setParamsDialog")
+            SetParamsDialogFragment(
+                singleViewModel.cameraX.firstPhotoSettings,
+                singleViewModel.cameraX
+            ) { newParams ->
+                singleViewModel.cameraX.firstPhotoSettings = newParams
+            }.show(parentFragmentManager, "setParamsDialog")
+        }
 
-            fabLastPhoto.setOnClickListener {
-                SetParamsDialogFragment (singleViewModel.cameraX.lastPhotoSettings, singleViewModel.cameraX).show(parentFragmentManager, "setParamsDialog")
-            }
+        fabLastPhoto.setOnClickListener {
+            SetParamsDialogFragment(
+                singleViewModel.cameraX.lastPhotoSettings,
+                singleViewModel.cameraX
+            ) { newParams ->
+                singleViewModel.cameraX.lastPhotoSettings = newParams
+            }.show(parentFragmentManager, "setParamsDialog")
         }
     }
 }
