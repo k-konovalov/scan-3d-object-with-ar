@@ -1,6 +1,7 @@
 package com.arvrlab.reconstructcamera.scenario
 
 import android.os.Bundle
+import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,15 +10,14 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.fragment.app.DialogFragment
+import com.arvrlab.reconstructcamera.CustomCameraX
 import com.arvrlab.reconstructcamera.R
 
-data class Params(var shutter: Int = 0, var iso: Int = 0, var wb: Int = 0, var focus: Int = 0)
-
-class SetParamsDialogFragment(val onSubmitButtonClicked: (Params) -> Unit) : DialogFragment(){
-    private  val iso: EditText by lazy { requireView().findViewById<EditText>(R.id.etIso) }
-    private  val focus: EditText by lazy { requireView().findViewById<EditText>(R.id.etFocus) }
-    private  val wb: EditText by lazy { requireView().findViewById<EditText>(R.id.etWB) }
-    private  val shutter: Spinner by lazy { requireView().findViewById<Spinner>(R.id.spinnerShutter) }
+class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters) : DialogFragment(){
+    private  val etIso: EditText by lazy { requireView().findViewById<EditText>(R.id.etIso) }
+    private  val etFocus: EditText by lazy { requireView().findViewById<EditText>(R.id.etFocus) }
+    private  val etWb: EditText by lazy { requireView().findViewById<EditText>(R.id.etWB) }
+    private  val spinnerShutter: Spinner by lazy { requireView().findViewById<Spinner>(R.id.spinnerShutter) }
     private var shutterSpeeds = mapOf(
         "30" to 30.0,
         "15" to 15.0,
@@ -47,7 +47,14 @@ class SetParamsDialogFragment(val onSubmitButtonClicked: (Params) -> Unit) : Dia
         super.onViewCreated(view, savedInstanceState)
 
         ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterSpeeds.filter { it.value < 1.0 }.keys.toList()
-        ).also { shutter.adapter = it }
+        ).also { spinnerShutter.adapter = it }
+        manualParameters.run {
+            etIso.setText(iso.toString())
+            etFocus.setText(focus.toString())
+            etWb.setText(wb.toString())
+            spinnerShutter.setSelection(shutterIndex)
+        }
+
 
         view.findViewById<Button>(R.id.btnSubmit).setOnClickListener {
             onSubmitButtonClicked()
@@ -66,8 +73,12 @@ class SetParamsDialogFragment(val onSubmitButtonClicked: (Params) -> Unit) : Dia
     }
 
     private fun onSubmitButtonClicked() {
-        val params = Params(shutter.selectedItemPosition, iso.text.toString().toInt(), wb.text.toString().toInt(), focus.text.toString().toInt())
-        onSubmitButtonClicked(params)
+        manualParameters.apply {
+            iso = etIso.text.toString().toInt()
+            wb = etWb.text.toString().toInt()
+            focus = etFocus.text.toString().toInt()
+            shutterIndex = spinnerShutter.selectedItemPosition
+        }
         dismiss()
     }
 
