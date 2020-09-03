@@ -41,7 +41,7 @@ import kotlin.math.min
 
 class CustomCameraX {
     open class Parameters {
-        data class ManualParameters(val shutterIndex: Int, val iso: Int, val wb: Int, val focus: Int){
+        data class ManualParameters(var shutterIndex: Int, var iso: Int, var wb: Int, var focus: Int){
             fun getDifferenceWith(second: ManualParameters): DifferenceParameter {
                 val differentParameter = mutableListOf<DifferenceParameter>()
 
