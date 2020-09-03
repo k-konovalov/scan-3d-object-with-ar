@@ -5,15 +5,13 @@ import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
+import android.widget.*
 import androidx.fragment.app.DialogFragment
 import com.arvrlab.reconstructcamera.CustomCameraX
 import com.arvrlab.reconstructcamera.R
+import com.google.android.material.textfield.TextInputLayout
 
-class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters) : DialogFragment(){
+class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters, private val cameraX: CustomCameraX) : DialogFragment(){
     private  val etIso: EditText by lazy { requireView().findViewById<EditText>(R.id.etIso) }
     private  val etFocus: EditText by lazy { requireView().findViewById<EditText>(R.id.etFocus) }
     private  val etWb: EditText by lazy { requireView().findViewById<EditText>(R.id.etWB) }
@@ -54,6 +52,11 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
             etWb.setText(wb.toString())
             spinnerShutter.setSelection(shutterIndex)
         }
+        cameraX.run {
+            view.findViewById<TextInputLayout>(R.id.tilIso).hint = "ISO (50 - ${maxIso.value}):"
+            view.findViewById<TextInputLayout>(R.id.tilFocus).hint = "Focus (0 - ${maxFocus.value}):"
+        }
+
 
 
         view.findViewById<Button>(R.id.btnSubmit).setOnClickListener {

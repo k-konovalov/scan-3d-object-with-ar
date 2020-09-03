@@ -81,10 +81,10 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         }
 
         fabFirstPhoto.setOnClickListener {
-            SetParamsDialogFragment(singleViewModel.cameraX.firstPhotoSettings).show(parentFragmentManager, "setParamsDialog")
+            SetParamsDialogFragment(singleViewModel.cameraX.firstPhotoSettings, singleViewModel.cameraX).show(parentFragmentManager, "setParamsDialog")
 
             fabLastPhoto.setOnClickListener {
-                SetParamsDialogFragment (singleViewModel.cameraX.lastPhotoSettings).show(parentFragmentManager, "setParamsDialog")
+                SetParamsDialogFragment (singleViewModel.cameraX.lastPhotoSettings, singleViewModel.cameraX).show(parentFragmentManager, "setParamsDialog")
             }
         }
     }
