@@ -446,13 +446,10 @@ class CustomCameraX {
 
     fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long, differenceParameter: DifferenceParameter? = null){
         val totalTimeForOnePhotoSeries = numPhotos * interval
-        Toast.makeText(
-            context,
-            "Timer set with interval $interval & numPhotos: $numPhotos:",
-            Toast.LENGTH_SHORT
-        ).show()
+        Toast.makeText(context, "Timer set with interval $interval & numPhotos: $numPhotos:", Toast.LENGTH_SHORT).show()
         photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
             override fun onTick(p0: Long) {
+
                 takePhoto(context)
             }
 
