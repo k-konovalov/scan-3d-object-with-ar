@@ -44,7 +44,7 @@ import kotlin.math.min
 
 
 class CustomCameraX {
-    open class Parameters {
+    class Parameters {
         data class ManualParameters(val shutterIndex: Int, val iso: Int, val wb: Int, val focus: Int){
             fun getDifferenceWith(second: ManualParameters): DifferenceParameter {
                 val differentParameter = mutableListOf<DifferenceParameter>()
@@ -100,12 +100,13 @@ class CustomCameraX {
     private val RATIO_16_9_VALUE = 16.0 / 9.0
 
     //EV & WB
-    val wb = MutableLiveData<Int>(0)
-    val focus = MutableLiveData<Int>(0)
+    val wb = MutableLiveData<Int>()
+    val focus = MutableLiveData<Int>()
     val maxFocus = MutableLiveData<Int>()
     val iso = MutableLiveData<Int>()
     val maxIso = MutableLiveData<Int>()
     val frameDuration = MutableLiveData<Int>()
+    private fun MutableLiveData<Int>.notNullValue() = value ?: 0
     val maxFrameDuration = MutableLiveData<Long>()
     var shutterSpeeds = listOf(
         30.0,
@@ -133,10 +134,11 @@ class CustomCameraX {
     val maxShutter = MutableLiveData<Int>()
     val shutter = MutableLiveData<Int>(0)
     //Auto switch
-    val autoWB = MutableLiveData<Boolean>(true)
-    val autoExposition = MutableLiveData<Boolean>(true)
-    val autoFocus = MutableLiveData<Boolean>(true)
-    val flash = MutableLiveData<Boolean>(false)
+    val autoWB = MutableLiveData<Boolean>()
+    val autoExposition = MutableLiveData<Boolean>()
+    val autoFocus = MutableLiveData<Boolean>()
+    val flash = MutableLiveData<Boolean>()
+    private fun MutableLiveData<Boolean>.notNullValue() = value ?: false
 
     private  val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
@@ -288,20 +290,20 @@ class CustomCameraX {
         it.setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
         it.setTargetAspectRatio(screenAspectRatio)
         it.setTargetRotation(rotation)
-        it.setFlashMode(if (flash.value!!) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
+        it.setFlashMode(if (flash.notNullValue()) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
         attachSettingsTo(it)
         it.build()
     }
 
     private fun attachSettingsTo(useCaseBuilder: Any){
         Camera2Interop.Extender(useCaseBuilder as ExtendableBuilder<*>).run {
-            if(flash.value!!)setCaptureRequestOption(
+            if(flash.notNullValue())setCaptureRequestOption(
                 CaptureRequest.FLASH_MODE,
                 CameraMetadata.FLASH_MODE_TORCH
             )
             else setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF)
             // adjust WB using seekbar's params
-            if (autoWB.value!!) setCaptureRequestOption(
+            if (autoWB.notNullValue()) setCaptureRequestOption(
                 CaptureRequest.CONTROL_AWB_MODE,
                 CameraMetadata.CONTROL_AWB_MODE_AUTO
             )
@@ -316,11 +318,11 @@ class CustomCameraX {
                 )
                 setCaptureRequestOption(
                     CaptureRequest.COLOR_CORRECTION_GAINS,
-                    colorTemperature(wb.value!!)
+                    colorTemperature(wb.notNullValue())
                 )
             }
             // abjust FOCUS using seekbar's params
-            if (autoFocus.value!!) setCaptureRequestOption(
+            if (autoFocus.notNullValue()) setCaptureRequestOption(
                 CaptureRequest.CONTROL_AF_MODE,
                 CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO
             )
@@ -329,10 +331,10 @@ class CustomCameraX {
                     CaptureRequest.CONTROL_AF_MODE,
                     CameraMetadata.CONTROL_AF_MODE_OFF
                 )
-                setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
+                setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.notNullValue().toFloat())
             }
             // abjust ISO\Shutter using seekbar's params
-            if (autoExposition.value!!) setCaptureRequestOption(
+            if (autoExposition.notNullValue()) setCaptureRequestOption(
                 CaptureRequest.CONTROL_AE_MODE,
                 CameraMetadata.CONTROL_AE_MODE_ON
             )
@@ -343,10 +345,10 @@ class CustomCameraX {
                     CaptureRequest.CONTROL_AE_MODE,
                     CameraMetadata.CONTROL_AE_MODE_OFF
                 )
-                setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
+                setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.notNullValue())
 
                 // abjust Exposure using seekbar's params
-                val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
+                val evChoice = (shutterSpeeds[shutter.notNullValue()] * 1000)
                 setCaptureRequestOption(
                     CaptureRequest.SENSOR_EXPOSURE_TIME,
                     evChoice.toNanoSecond()
@@ -526,4 +528,5 @@ class CustomCameraX {
             ManualParametersType.FOCUS -> focus.postValue(currentValue)
             else -> { }
         }
+
 }
