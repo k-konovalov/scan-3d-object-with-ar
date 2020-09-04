@@ -1,7 +1,6 @@
 package com.arvrlab.reconstructcamera.scenario
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
@@ -86,19 +85,21 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         }
 
         fabFirstPhoto.setOnClickListener {
-            SetParamsDialogFragment(singleViewModel.cameraX.shutterSpeeds) { params ->
-                //TODO(params) получены параметры для первого фото
-                Log.d("SetParamsDialogFragment", params.toString())
-                singleViewModel.cameraX.firstPhotoSettings = params
+            SetParamsDialogFragment(
+                singleViewModel.cameraX.firstPhotoSettings,
+                singleViewModel.cameraX
+            ) { newParams ->
+                singleViewModel.cameraX.firstPhotoSettings = newParams
             }.show(parentFragmentManager, "setParamsDialog")
+        }
 
-            fabLastPhoto.setOnClickListener {
-                SetParamsDialogFragment(singleViewModel.cameraX.shutterSpeeds) { params ->
-                    //TODO(params) получены параметры для последнего фото
-                    Log.d("SetParamsDialogFragment", params.toString())
-                    singleViewModel.cameraX.lastPhotoSettings = params
-                }.show(parentFragmentManager, "setParamsDialog")
-            }
+        fabLastPhoto.setOnClickListener {
+            SetParamsDialogFragment(
+                singleViewModel.cameraX.lastPhotoSettings,
+                singleViewModel.cameraX
+            ) { newParams ->
+                singleViewModel.cameraX.lastPhotoSettings = newParams
+            }.show(parentFragmentManager, "setParamsDialog")
         }
     }
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -13,105 +12,88 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
+        android:text="Параметры для фото:"
         android:textSize="20sp"
-        android:text="Параметры для первого фото"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:textSize="20sp"
-        android:layout_marginTop="16dp"
         android:id="@+id/tvShutter"
-        app:layout_constraintTop_toBottomOf="@+id/tvSetParams"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Shutter:"
+        android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
+        android:text="Shutter:"
+        android:textSize="18sp"
         app:layout_constraintStart_toStartOf="parent"
-        />
+        app:layout_constraintTop_toBottomOf="@+id/tvSetParams" />
 
     <Spinner
+        android:id="@+id/spinnerShutter"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="@id/tvShutter"
-        app:layout_constraintTop_toTopOf="@id/tvShutter"
-        android:id="@+id/spinnerShutter"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/tvShutter"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        />
+        app:layout_constraintTop_toTopOf="@id/tvShutter" />
 
-    <TextView
-        android:textSize="20sp"
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilIso"
         android:layout_marginTop="16dp"
-        android:id="@+id/tvIso"
-        app:layout_constraintTop_toBottomOf="@+id/tvShutter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="ISO:"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintStart_toStartOf="parent"
-        />
-
-    <EditText
-        android:id="@+id/etIso"
+        style="@style/GeneralTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="0"
-        android:layout_marginStart="16dp"
-        android:inputType="number"
+        android:hint="ISO"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvIso"
-        app:layout_constraintBottom_toBottomOf="@id/tvIso"
-        app:layout_constraintStart_toEndOf="@id/tvIso"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/spinnerShutter">
 
-    <TextView
-        android:textSize="20sp"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etIso"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="0" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_marginTop="16dp"
-        android:id="@+id/tvFocus"
-        app:layout_constraintTop_toBottomOf="@+id/tvIso"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Focus:"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintStart_toStartOf="parent"
-        />
-
-    <EditText
-        android:inputType="number"
-        android:id="@+id/etFocus"
+        android:id="@+id/tilFocus"
+        style="@style/GeneralTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="0"
-        app:layout_constraintTop_toTopOf="@id/tvFocus"
-        app:layout_constraintBottom_toBottomOf="@id/tvFocus"
-        app:layout_constraintStart_toEndOf="@id/tvFocus"
+        android:hint="Focus"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="16dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tilIso">
 
-    <TextView
-        android:textSize="20sp"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etFocus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="0" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_marginTop="16dp"
-        android:id="@+id/tvWb"
-        app:layout_constraintTop_toBottomOf="@+id/tvFocus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="WB:"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintStart_toStartOf="parent"
-        />
-
-    <EditText
-        android:inputType="number"
-        android:id="@+id/etWB"
+        android:id="@+id/tilWB"
+        style="@style/GeneralTextInputLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="0"
-        app:layout_constraintStart_toEndOf="@+id/tvWb"
-        app:layout_constraintTop_toTopOf="@+id/tvWb"
-        app:layout_constraintBottom_toBottomOf="@+id/tvWb"
+        android:hint="WB (0 - 100):"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="16dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tilFocus">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etWB"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="0" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <Button
         android:id="@+id/btnCancel"
@@ -133,11 +115,11 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="@color/colorAccent"
+        android:backgroundTint="@color/colorPrimary"
         android:text="Применить"
         android:textColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etWB" />
+        app:layout_constraintTop_toBottomOf="@id/tilWB" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
