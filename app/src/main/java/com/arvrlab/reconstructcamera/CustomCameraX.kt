@@ -106,8 +106,9 @@ class CustomCameraX {
     val iso = MutableLiveData<Int>()
     val maxIso = MutableLiveData<Int>()
     val frameDuration = MutableLiveData<Int>()
-    private fun MutableLiveData<Int>.notNullValue() = value ?: 0
     val maxFrameDuration = MutableLiveData<Long>()
+    private fun MutableLiveData<Int>.notNullValue() = value ?: 0
+    val shutter = MutableLiveData<Int>(0)
     var shutterSpeeds = listOf(
         30.0,
         15.0,
@@ -132,7 +133,6 @@ class CustomCameraX {
         .filter { it < 1.0 } // less than second
         .reversed()
     val maxShutter = MutableLiveData<Int>()
-    val shutter = MutableLiveData<Int>(0)
     //Auto switch
     val autoWB = MutableLiveData<Boolean>()
     val autoExposition = MutableLiveData<Boolean>()
