@@ -226,7 +226,7 @@ class CustomCameraX {
                     cameraLog += "\nExposure time: ${lower.toMS()}ms - ${upper.toMS()}ms"
                     if(id == "0") {
                         shutterSpeeds = shutterSpeeds.filter {
-                            val currentShutterInNS = (it * 1000).toNanoSecond() //some magic formula
+                            val currentShutterInNS = it.toNanoSecond() //some magic formula
                             val isSupportedByCamera = currentShutterInNS in lower..upper
                             isSupportedByCamera
                         }
@@ -348,11 +348,8 @@ class CustomCameraX {
                 setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.notNullValue())
 
                 // abjust Exposure using seekbar's params
-                val evChoice = (shutterSpeeds[shutter.notNullValue()] * 1000)
-                setCaptureRequestOption(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    evChoice.toNanoSecond()
-                ) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
+                val evChoice = (shutterSpeeds[shutter.notNullValue()])
+                setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
             }
         }
     }
@@ -398,7 +395,7 @@ class CustomCameraX {
 
     private fun Long.toMS(): Int = (this / million()).toInt() // NS -> MS
     private fun Int.toNanoSecond(): Long = (this * million()) // MS -> NS
-    private fun Double.toNanoSecond(): Long = (this * million()).toLong()
+    private fun Double.toNanoSecond(): Long = (this * million() * 1000).toLong()
     private fun million() = (1 * 1000 * 1000L)
 
     fun takePhoto(context: Context) {
@@ -409,7 +406,7 @@ class CustomCameraX {
         isPhotoCaptured = false
 
         //wait for relaunch useCase
-        imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
+        imageCapture?.takePicture(outputOptions, mainExecutor, object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)
