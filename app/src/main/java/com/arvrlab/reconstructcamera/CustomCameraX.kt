@@ -24,16 +24,16 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnNextLayout
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import com.arvrlab.reconstructcamera.CustomCameraX.Parameters.*
 import com.arvrlab.reconstructcamera.core.*
 import com.google.common.util.concurrent.ListenableFuture
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
+import java.lang.Runnable
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
@@ -61,7 +61,22 @@ class CustomCameraX {
             }
         }
 
-        data class DifferenceParameter(val firstPhoto: Int, val lastPhoto: Int, val type: ManualParametersType)
+        data class DifferenceParameter(val firstPhoto: Int, val lastPhoto: Int, val type: ManualParametersType){
+            fun intermediateValues(numPhotos: Int): List<Int>{
+                val arrayOfValues = mutableListOf<Int>()
+                var currentValue = firstPhoto
+                val step = lastPhoto / numPhotos
+
+                for (x in firstPhoto..lastPhoto){
+                    if(currentValue <= lastPhoto){
+                        arrayOfValues.add(currentValue)
+                        currentValue += step
+                    }
+                }
+
+                return arrayOfValues
+            }
+        }
 
         val empty = ManualParameters(0,0,0,0)
 
@@ -131,10 +146,12 @@ class CustomCameraX {
     private val SECOND = 1000L
 
     //
-    var firstPhotoSettings = ManualParameters(0,0,0,0)
-    var lastPhotoSettings = ManualParameters(0,0,30,0)
+    var firstPhotoSettings = Parameters().empty
+    var lastPhotoSettings = Parameters().empty
     var differenceParameter = DifferenceParameter(0,0, ManualParametersType.NONE)
     val isBracketingReady = MutableLiveData<Boolean>(false)
+    var isCameraRebinded = false
+    var isPhotoCaptured = false
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
         mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
@@ -346,20 +363,15 @@ class CustomCameraX {
     ) {
         try {
             // A variable number of use-cases can be passed here - camera provides access to CameraControl & CameraInfo
-            camera = cameraProvider?.bindToLifecycle(
-                viewLifecycleOwner, cameraSelector, preview, imageCapture
-            )
+            camera = cameraProvider?.bindToLifecycle(viewLifecycleOwner, cameraSelector, preview, imageCapture)
 
             val captureSize = imageCapture?.attachedSurfaceResolution ?: Size(0, 0)
             val previewSize = preview?.attachedSurfaceResolution ?: Size(0, 0)
             val analyzeSize = imageAnalyzer?.attachedSurfaceResolution ?: Size(0, 0)
 
-            Log.e(
-                TAG,
-                "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize"
-            )
-            //internalCameraView.getPreferredImplementationMode() = PreviewView.ImplementationMode.TEXTURE_VIEW
+            Log.e(TAG, "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize")
             preview?.setSurfaceProvider(internalCameraView.createSurfaceProvider())
+            isCameraRebinded = true
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
@@ -392,18 +404,14 @@ class CustomCameraX {
         val fileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
         val outputOptions = getOutputFileOptions(context.contentResolver, appName, fileName)
 
-        CoroutineScope(Dispatchers.Default).launch {
-            delay(200)
-            //wait for relaunch useCase
-        }
+        isPhotoCaptured = false
 
-        imageCapture?.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
+        //wait for relaunch useCase
+        imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)
+                        isPhotoCaptured = true
                     }
                 }
 
@@ -485,7 +493,6 @@ class CustomCameraX {
         smth.run {
             when(type){
                 ManualParametersType.NONE -> return
-
                 else -> {
                     Log.e(TAG, "$type:$firstPhoto->$lastPhoto")
                     differenceParameter = this
@@ -495,26 +502,23 @@ class CustomCameraX {
         }
     }
 
-    fun launchBracketing(context: Context, interval: Int = 1, numPhotos: Int = 1) {
-        val totalTimeForOnePhotoSeries = numPhotos * interval
-        val step = differenceParameter.lastPhoto / numPhotos
-        var currentValue = differenceParameter.firstPhoto
-
-        photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
-            override fun onTick(p0: Long) {
+    fun launchBracketing(context: Context, interval: Int = 1, numPhotos: Int = 1) =
+        CoroutineScope(Dispatchers.Default).launch {
+            val arrayOfValues = differenceParameter.intermediateValues(numPhotos)
+            arrayOfValues.forEach { currentValue ->
                 provideParametersShift(currentValue)
-                takePhoto(context) //ToDO: ImageCapture relaunched livedata?
-                currentValue += step
-            }
+                delay(interval * SECOND)
 
-            override fun onFinish() {
-                isPhotoTimerWork = false
-                Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show()
+                takePhoto(context)
+                while (isActive) { //
+                    if (isPhotoCaptured) break
+                    else delay(50)
+                }
             }
-        }
+            withContext(Dispatchers.Main) { Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show() }
     }
 
-    fun provideParametersShift(currentValue: Int) {
+    private fun provideParametersShift(currentValue: Int) =
         when (differenceParameter.type) {
             ManualParametersType.SHUTTER -> shutter.postValue(currentValue)
             ManualParametersType.ISO -> iso.postValue(currentValue)
@@ -522,6 +526,4 @@ class CustomCameraX {
             ManualParametersType.FOCUS -> focus.postValue(currentValue)
             else -> { }
         }
-    }
-
 }
