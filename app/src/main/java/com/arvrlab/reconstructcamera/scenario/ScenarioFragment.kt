@@ -89,12 +89,14 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
             SetParamsDialogFragment(singleViewModel.cameraX.shutterSpeeds) { params ->
                 //TODO(params) получены параметры для первого фото
                 Log.d("SetParamsDialogFragment", params.toString())
+                singleViewModel.cameraX.firstPhotoSettings = params
             }.show(parentFragmentManager, "setParamsDialog")
 
             fabLastPhoto.setOnClickListener {
                 SetParamsDialogFragment(singleViewModel.cameraX.shutterSpeeds) { params ->
                     //TODO(params) получены параметры для последнего фото
                     Log.d("SetParamsDialogFragment", params.toString())
+                    singleViewModel.cameraX.lastPhotoSettings = params
                 }.show(parentFragmentManager, "setParamsDialog")
             }
         }

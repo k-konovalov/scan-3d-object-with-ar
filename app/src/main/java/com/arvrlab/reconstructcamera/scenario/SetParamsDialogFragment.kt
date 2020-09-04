@@ -9,11 +9,10 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
 import androidx.fragment.app.DialogFragment
+import com.arvrlab.reconstructcamera.CustomCameraX
 import com.arvrlab.reconstructcamera.R
 
-data class Params(var shutter: Int = 0, var iso: Int = 0, var wb: Int = 0, var focus: Int = 0)
-
-class SetParamsDialogFragment(private val shuttervalue: List<Double>, val onSubmitButtonClicked: (Params) -> Unit) : DialogFragment(){
+class SetParamsDialogFragment(private val shuttervalue: List<Double>, val onSubmitButtonClicked: (CustomCameraX.Parameters.ManualParameters) -> Unit) : DialogFragment(){
     private  val iso: EditText by lazy { requireView().findViewById<EditText>(R.id.etIso) }
     private  val focus: EditText by lazy { requireView().findViewById<EditText>(R.id.etFocus) }
     private  val wb: EditText by lazy { requireView().findViewById<EditText>(R.id.etWB) }
@@ -49,11 +48,10 @@ class SetParamsDialogFragment(private val shuttervalue: List<Double>, val onSubm
 
         val shutterKeys = mutableListOf<String>()
             shuttervalue.forEach { value ->
-                 shutterMap[value]?.let { shutterKeys.add(it) }
+                 shutterMap[value]?.run { shutterKeys.add(this) }
             }
 
-        ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterKeys
-        ).also { shutter.adapter = it }
+        shutter.adapter = ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterKeys)
 
         view.findViewById<Button>(R.id.btnSubmit).setOnClickListener {
             onSubmitButtonClicked()
@@ -72,7 +70,7 @@ class SetParamsDialogFragment(private val shuttervalue: List<Double>, val onSubm
     }
 
     private fun onSubmitButtonClicked() {
-        val params = Params(shutter.selectedItemPosition, iso.text.toString().toInt(), wb.text.toString().toInt(), focus.text.toString().toInt())
+        val params = CustomCameraX.Parameters.ManualParameters(shutter.selectedItemPosition, iso.text.toString().toInt(), wb.text.toString().toInt(), focus.text.toString().toInt())
         onSubmitButtonClicked(params)
         dismiss()
     }
