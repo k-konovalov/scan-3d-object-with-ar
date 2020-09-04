@@ -29,6 +29,10 @@ import androidx.lifecycle.MutableLiveData
 import com.arvrlab.reconstructcamera.CustomCameraX.Parameters.*
 import com.arvrlab.reconstructcamera.core.*
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -127,8 +131,10 @@ class CustomCameraX {
     private val SECOND = 1000L
 
     //
-    var firstPhotoSettings = Parameters().empty
-    var lastPhotoSettings = Parameters().empty
+    var firstPhotoSettings = ManualParameters(0,0,0,0)
+    var lastPhotoSettings = ManualParameters(0,0,30,0)
+    var differenceParameter = DifferenceParameter(0,0, ManualParametersType.NONE)
+    val isBracketingReady = MutableLiveData<Boolean>(false)
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
         mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
@@ -386,6 +392,11 @@ class CustomCameraX {
         val fileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
         val outputOptions = getOutputFileOptions(context.contentResolver, appName, fileName)
 
+        CoroutineScope(Dispatchers.Default).launch {
+            delay(200)
+            //wait for relaunch useCase
+        }
+
         imageCapture?.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
@@ -444,13 +455,56 @@ class CustomCameraX {
         } else Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
     }
 
-    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long, differenceParameter: DifferenceParameter? = null){
+    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long){
+        if(isPhotoTimerWork) {
+            isPhotoTimerWork = !isPhotoTimerWork
+            photoTimer?.cancel()
+        } else {
+            val totalTimeForOnePhotoSeries = numPhotos * interval
+            Toast.makeText(context, "Timer set with interval $interval & numPhotos: $numPhotos:", Toast.LENGTH_SHORT).show()
+
+            photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
+                override fun onTick(p0: Long) {
+
+                    takePhoto(context)
+                }
+
+                override fun onFinish() {
+                    isPhotoTimerWork = false
+                    Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show()
+                }
+            }
+            isPhotoTimerWork = !isPhotoTimerWork
+            photoTimer?.start()
+        }
+    }
+
+    fun prepareForBracketing() {
+        if (firstPhotoSettings == lastPhotoSettings) return
+        val smth = firstPhotoSettings.getDifferenceWith(lastPhotoSettings)
+        smth.run {
+            when(type){
+                ManualParametersType.NONE -> return
+
+                else -> {
+                    Log.e(TAG, "$type:$firstPhoto->$lastPhoto")
+                    differenceParameter = this
+                    isBracketingReady.postValue(true)
+                }
+            }
+        }
+    }
+
+    fun launchBracketing(context: Context, interval: Int = 1, numPhotos: Int = 1) {
         val totalTimeForOnePhotoSeries = numPhotos * interval
-        Toast.makeText(context, "Timer set with interval $interval & numPhotos: $numPhotos:", Toast.LENGTH_SHORT).show()
+        val step = differenceParameter.lastPhoto / numPhotos
+        var currentValue = differenceParameter.firstPhoto
+
         photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
             override fun onTick(p0: Long) {
-
-                takePhoto(context)
+                provideParametersShift(currentValue)
+                takePhoto(context) //ToDO: ImageCapture relaunched livedata?
+                currentValue += step
             }
 
             override fun onFinish() {
@@ -458,37 +512,16 @@ class CustomCameraX {
                 Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show()
             }
         }
-        if(isPhotoTimerWork) {
-            isPhotoTimerWork = !isPhotoTimerWork
-            photoTimer?.onFinish()
-        }
-        else {
-            isPhotoTimerWork = !isPhotoTimerWork
-            photoTimer?.start()
+    }
+
+    fun provideParametersShift(currentValue: Int) {
+        when (differenceParameter.type) {
+            ManualParametersType.SHUTTER -> shutter.postValue(currentValue)
+            ManualParametersType.ISO -> iso.postValue(currentValue)
+            ManualParametersType.WB -> wb.postValue(currentValue)
+            ManualParametersType.FOCUS -> focus.postValue(currentValue)
+            else -> { }
         }
     }
 
-    fun prepareForBracketing() {
-        val firstPhotoSettings = ManualParameters(0,0,0,0)
-        val lastPhotoSettings = ManualParameters(0,30,0,0)
-        if (firstPhotoSettings == lastPhotoSettings) return
-        val smth = firstPhotoSettings.getDifferenceWith(lastPhotoSettings)
-        smth.run {
-            when(type){
-                ManualParametersType.NONE -> return
-                /*ManualParametersType.SHUTTER ->
-                ManualParametersType.ISO -> {}
-                ManualParametersType.WB -> {}
-                ManualParametersType.FOCUS -> {}*/
-                else -> {
-                    Log.e(TAG, "$type:$firstPhoto->$lastPhoto")
-                    launchBracketing(this)
-                }
-            }
-        }
-    }
-
-    fun launchBracketing(differenceParameter: DifferenceParameter) {
-        //initCamera()
-    }
 }
