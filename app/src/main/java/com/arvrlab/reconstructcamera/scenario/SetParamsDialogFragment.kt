@@ -11,7 +11,7 @@ import com.arvrlab.reconstructcamera.CustomCameraX
 import com.arvrlab.reconstructcamera.R
 import com.google.android.material.textfield.TextInputLayout
 
-class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters, private val cameraX: CustomCameraX) : DialogFragment(){
+class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters, private val cameraX: CustomCameraX,val onSubmitButtonClicked: (CustomCameraX.Parameters.ManualParameters) -> Unit) : DialogFragment(){
     private  val etIso: EditText by lazy { requireView().findViewById<EditText>(R.id.etIso) }
     private  val etFocus: EditText by lazy { requireView().findViewById<EditText>(R.id.etFocus) }
     private  val etWb: EditText by lazy { requireView().findViewById<EditText>(R.id.etWB) }
@@ -76,12 +76,8 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
     }
 
     private fun onSubmitButtonClicked() {
-        manualParameters.apply {
-            iso = etIso.text.toString().toInt()
-            wb = etWb.text.toString().toInt()
-            focus = etFocus.text.toString().toInt()
-            shutterIndex = spinnerShutter.selectedItemPosition
-        }
+        val newManualParams = CustomCameraX.Parameters.ManualParameters(spinnerShutter.selectedItemPosition, etIso.text.toString().toInt(), etWb.text.toString().toInt(), etFocus.text.toString().toInt())
+        onSubmitButtonClicked(newManualParams)
         dismiss()
     }
 
