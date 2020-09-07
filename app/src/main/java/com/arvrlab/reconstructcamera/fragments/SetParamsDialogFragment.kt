@@ -44,7 +44,7 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterSpeedsMap.keys.toList()
+        ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterSpeedsMap.keys.toList().reversed()
         ).also { spinnerShutter.adapter = it }
         manualParameters.run {
             etIso.setText(iso.toString())
