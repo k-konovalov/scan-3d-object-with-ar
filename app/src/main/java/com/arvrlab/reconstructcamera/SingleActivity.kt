@@ -4,14 +4,14 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.FragmentActivity
+import com.arvrlab.reconstructcamera.core.ViewPagerAdapterAdapter
 import kotlinx.android.synthetic.main.main_activity.*
 
-class MainActivity : FragmentActivity(R.layout.main_activity) {
+class SingleActivity : FragmentActivity(R.layout.main_activity) {
 
     private val singleViewModel: SingleViewModel by viewModels()
     private val permissions = arrayOf("android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE")
@@ -31,7 +31,7 @@ class MainActivity : FragmentActivity(R.layout.main_activity) {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         viewPager.apply {
-            adapter = ViewPagerAdapterAdapter(this@MainActivity)
+            adapter = ViewPagerAdapterAdapter(this@SingleActivity)
             currentItem = 0
         }
     }

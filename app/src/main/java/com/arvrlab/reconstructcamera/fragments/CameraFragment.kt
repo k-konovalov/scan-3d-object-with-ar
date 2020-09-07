@@ -1,4 +1,4 @@
-package com.arvrlab.reconstructcamera.ui.main
+package com.arvrlab.reconstructcamera.fragments
 
 import android.os.Bundle
 import android.view.View
@@ -7,7 +7,6 @@ import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.arvrlab.reconstructcamera.R
 import com.arvrlab.reconstructcamera.SingleViewModel
@@ -17,9 +16,8 @@ import com.warkiz.widget.SeekParams
 import kotlinx.android.synthetic.main.main_activity.*
 import kotlinx.android.synthetic.main.main_fragment.*
 
-class MainFragment : Fragment(R.layout.main_fragment) {
+class CameraFragment : Fragment(R.layout.main_fragment) {
 
-    private val viewModel: MainViewModel by viewModels()
     private val singleViewModel : SingleViewModel by activityViewModels()
     private val activityContext by lazy { requireActivity() }
 

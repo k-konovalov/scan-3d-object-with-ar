@@ -1,4 +1,4 @@
-package com.arvrlab.reconstructcamera.scenario
+package com.arvrlab.reconstructcamera.fragments
 
 import android.os.Bundle
 import android.view.View
