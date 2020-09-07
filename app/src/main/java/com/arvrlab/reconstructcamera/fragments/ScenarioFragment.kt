@@ -29,13 +29,7 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
     private val singleViewModel: SingleViewModel by activityViewModels()
     private val activityContext by lazy { requireActivity() }
 
-    private val bar by lazy {
-        Snackbar.make(
-            requireView().coordLayout,
-            "",
-            Snackbar.LENGTH_INDEFINITE
-        )
-    }
+    private val bar by lazy { Snackbar.make(requireView().coordLayout, "", Snackbar.LENGTH_INDEFINITE) }
     private val snackView by lazy { bar.view as SnackbarLayout }
     private val snack: View by lazy { layoutInflater.inflate(R.layout.snack_bar_view, coordLayout, false) }
     private val snackText: TextView by lazy { snack.findViewById<TextView>(R.id.tvSnackMessage) }
@@ -77,8 +71,10 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 //                showToastWith(it)
 //            })
             isBracketingReady.observe(activityContext, Observer {
-                if (it && (intervalBetweenShot != 0) && (numPhotos != 0))
+                if (it && (intervalBetweenShot != 0) && (numPhotos != 0)) {
                     launchBracketing(requireContext(), intervalBetweenShot, numPhotos)
+                    showSnackBar()
+                }
             })
 
             capturedPhotoCount.observe(viewLifecycleOwner, Observer {
@@ -90,7 +86,6 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
             singleViewModel.cameraX.prepareForBracketing()
-            showSnackBar()
             //singleViewModel.cameraX.takePhoto(requireContext())
         }
 
@@ -127,21 +122,23 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
     }
 
     private fun updateProgress() {
-        CoroutineScope(Dispatchers.Main).launch {
-            val currentParamValue: String = getCurrentParamValue()
-            snackText.text = "\"Брекетинг по параметру \"${singleViewModel.cameraX.differenceParameter.type.name}\". Текущее значение - $currentParamValue"
-            snackProgress.setProgress(currentCapturedPhotoCount.toFloat())
+        val currentParamValue: String = getCurrentParamValue()
+        snackText.text = "\"Брекетинг по параметру \"${singleViewModel.cameraX.differenceParameter.type.name}\". Текущее значение - $currentParamValue"
+        snackProgress.setProgress(currentCapturedPhotoCount.toFloat())
 
-            val isLastPhoto = currentCapturedPhotoCount == singleViewModel.cameraX.numPhotos
-            if (isLastPhoto) {
-                snackText.text = "\"Брекетинг по параметру \"${singleViewModel.cameraX.differenceParameter.type.name}\". Текущее значение - $currentParamValue"
-                snackProgress.setProgress(snackProgress.max)
-                delay(700)
-                snackView.removeAllViews()
-                bar.dismiss()
-                fabTakePicture.isEnabled = true
-            } else
-                currentCapturedPhotoCount++
+        val isLastPhoto = currentCapturedPhotoCount == singleViewModel.cameraX.numPhotos
+        if (isLastPhoto) doWhenLastPhoto(currentParamValue)
+        else currentCapturedPhotoCount++
+    }
+
+    private fun doWhenLastPhoto(currentParamValue: String) {
+        CoroutineScope(Dispatchers.Main).launch {
+            snackText.text = "\"Брекетинг по параметру \"${singleViewModel.cameraX.differenceParameter.type.name}\". Текущее значение - $currentParamValue"
+            snackProgress.setProgress(snackProgress.max)
+            delay(700)
+            snackView.removeAllViews()
+            bar.dismiss()
+            fabTakePicture.isEnabled = true
         }
     }
 

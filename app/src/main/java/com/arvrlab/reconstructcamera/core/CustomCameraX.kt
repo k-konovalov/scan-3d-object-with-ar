@@ -415,7 +415,7 @@ class CustomCameraX {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)
                         isPhotoCaptured = true
-                        capturedPhotoCount.value = capturedPhotoCount.value ?: 0 + 1
+                        capturedPhotoCount.value = capturedPhotoCount.notNullValue() + 1
                     }
                 }
 
