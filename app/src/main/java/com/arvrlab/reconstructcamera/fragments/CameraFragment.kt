@@ -95,12 +95,11 @@ class CameraFragment : Fragment(R.layout.main_fragment) {
 
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
-            singleViewModel.cameraX.takePhoto(requireContext())
-        }
-        /*btnStartTimer.setOnClickListener {
             if (!etDelayBetweenPhoto.text.isNullOrEmpty() && !etNumberOfPhotos.text.isNullOrEmpty())
                 singleViewModel.cameraX.initPhotoTimer(requireContext(),etDelayBetweenPhoto.text.toString().toLong(), etNumberOfPhotos.text.toString().toLong())
-            else Toast.makeText(requireContext(),"Timer settings is empty?", Toast.LENGTH_SHORT).show()
+            else singleViewModel.cameraX.takePhoto(requireContext())
+        }
+        /*btnStartTimer.setOnClickListener {
         }*/
     }
 
