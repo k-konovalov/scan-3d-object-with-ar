@@ -406,7 +406,7 @@ class CustomCameraX {
         isPhotoCaptured = false
 
         //wait for relaunch useCase
-        imageCapture?.takePicture(outputOptions, analysisExecutor, object : ImageCapture.OnImageSavedCallback {
+        imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)
