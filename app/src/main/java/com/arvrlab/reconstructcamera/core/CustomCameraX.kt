@@ -81,13 +81,13 @@ class CustomCameraX {
     }
     private val TAG = "CustomCameraX"
     //Internal Camera
+    private var cameraProvider: ProcessCameraProvider? = null
     private var camera: Camera? = null
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
-
     private val analysisExecutor: Executor = Executors.newSingleThreadExecutor()
-    private var cameraProvider: ProcessCameraProvider? = null
+
     val errorMessage = MutableLiveData<String>("")
 
     //Internal Camera Settings
@@ -143,6 +143,10 @@ class CustomCameraX {
     private var photoTimer: CountDownTimer? = null
     private var isPhotoTimerWork = false
     private val SECOND = 1000L
+
+    //interval&batch
+    var intervalBetweenShot = 0
+    var numPhotos = 0
 
     //
     var firstPhotoSettings = Parameters().empty

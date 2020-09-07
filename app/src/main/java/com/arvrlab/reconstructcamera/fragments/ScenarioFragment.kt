@@ -21,7 +21,6 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
         super.onViewCreated(view, savedInstanceState)
 
         initCameraXObservers()
-        initSwitchListeners()
         initOnClickListeners()
     }
 
@@ -53,28 +52,9 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 //                showToastWith(it)
 //            })
             isBracketingReady.observe(activityContext, Observer {
-                if(it && etDelayBetweenPhoto.text.isNotEmpty() && etNumberOfPhotos.text.isNotEmpty())
-                    launchBracketing(requireContext(), etDelayBetweenPhoto.text.toString().toInt(), etNumberOfPhotos.text.toString().toInt())
+                if(it && (intervalBetweenShot !=0) && (numPhotos != 0))
+                    launchBracketing(requireContext(), intervalBetweenShot, numPhotos)
             })
-        }
-    }
-
-    private fun initSwitchListeners() {
-        sAF.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) singleViewModel.cameraX.autoFocus.postValue(true)
-            else singleViewModel.cameraX.autoFocus.postValue(false)
-        }
-        sAutoIsoShutter.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) singleViewModel.cameraX.autoExposition.postValue(true)
-            else singleViewModel.cameraX.autoExposition.postValue(false)
-        }
-        sAutoWB.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) singleViewModel.cameraX.autoWB.postValue(true)
-            else singleViewModel.cameraX.autoWB.postValue(false)
-        }
-        sFlash.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) singleViewModel.cameraX.flash.postValue(true)
-            else singleViewModel.cameraX.flash.postValue(false)
         }
     }
 
