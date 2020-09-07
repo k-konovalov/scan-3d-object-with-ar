@@ -15,6 +15,7 @@
         <item name="boxStrokeColor">@color/colorPrimary</item>
         <item name="boxStrokeWidth">0.1dp</item>
         <item name="boxStrokeWidthFocused">1dp</item>
+        <item name="android:paddingBottom">8dp</item>
         <item name="hintTextAppearance">@style/TextAppearance.MaterialComponents.Subtitle1</item>
     </style>
 

@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.camera.view.PreviewView
 import androidx.core.view.doOnLayout
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
@@ -28,8 +29,8 @@ class CameraFragment : Fragment(R.layout.main_fragment) {
         initSeekbarsListeners()
         initSwitchListeners()
         initOnClickListeners()
+        initDoOnTextChangedListeners()
     }
-
     private fun initSeekbarsListeners(){
         sbWb.onSeekChangeListener = object : OnSeekChangeListener{
             override fun onSeeking(seekParams: SeekParams?) {
@@ -94,14 +95,23 @@ class CameraFragment : Fragment(R.layout.main_fragment) {
 
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
-            singleViewModel.cameraX.takePhoto(requireContext())
-        }
-        btnStartTimer.setOnClickListener {
-            if (etDelayBetweenPhoto.text.isNotEmpty() && etNumberOfPhotos.text.isNotEmpty())
+            if (!etDelayBetweenPhoto.text.isNullOrEmpty() && !etNumberOfPhotos.text.isNullOrEmpty())
                 singleViewModel.cameraX.initPhotoTimer(requireContext(),etDelayBetweenPhoto.text.toString().toLong(), etNumberOfPhotos.text.toString().toLong())
-            else Toast.makeText(requireContext(),"Timer settings is empty?", Toast.LENGTH_SHORT).show()
+            else singleViewModel.cameraX.takePhoto(requireContext())
+        }
+        /*btnStartTimer.setOnClickListener {
+        }*/
+    }
+
+    private fun initDoOnTextChangedListeners() {
+        etDelayBetweenPhoto.doOnTextChanged { text, start, before, count ->
+            if(!text.isNullOrEmpty()) singleViewModel.cameraX.intervalBetweenShot = text.toString().toInt()
+        }
+        etNumberOfPhotos.doOnTextChanged { text, start, before, count ->
+            if(!text.isNullOrEmpty()) singleViewModel.cameraX.numPhotos = text.toString().toInt()
         }
     }
+
 
     private fun initCameraXObservers(){
         val observerForCameraChange = Observer<Any> { _ ->
