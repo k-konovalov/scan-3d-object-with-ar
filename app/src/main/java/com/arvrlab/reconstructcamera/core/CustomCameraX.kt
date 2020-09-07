@@ -1,4 +1,4 @@
-package com.arvrlab.reconstructcamera
+package com.arvrlab.reconstructcamera.core
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
@@ -24,12 +24,10 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import androidx.core.view.doOnNextLayout
-import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
-import com.arvrlab.reconstructcamera.CustomCameraX.Parameters.*
-import com.arvrlab.reconstructcamera.core.*
+import com.arvrlab.reconstructcamera.R
+import com.arvrlab.reconstructcamera.core.CustomCameraX.Parameters.*
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.*
 import java.io.File
@@ -89,7 +87,6 @@ class CustomCameraX {
     private var imageAnalyzer: ImageAnalysis? = null
 
     private val analysisExecutor: Executor = Executors.newSingleThreadExecutor()
-    private lateinit var mainExecutor: Executor
     private var cameraProvider: ProcessCameraProvider? = null
     val errorMessage = MutableLiveData<String>("")
 
@@ -140,7 +137,7 @@ class CustomCameraX {
     val flash = MutableLiveData<Boolean>()
     private fun MutableLiveData<Boolean>.notNullValue() = value ?: false
 
-    private  val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+    private val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
     //timer
     private var photoTimer: CountDownTimer? = null
@@ -156,7 +153,6 @@ class CustomCameraX {
     var isPhotoCaptured = false
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
-        mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
         // Get screen metrics used to setup camera for full screen resolution
         val metrics = DisplayMetrics().also { internalCameraView.display.getRealMetrics(it) }
         val screenAspectRatio = aspectRatio(metrics.widthPixels, metrics.heightPixels)
@@ -176,7 +172,7 @@ class CustomCameraX {
                 cameraSelector,
                 internalCameraView,
                 viewLifecycleOwner
-            ), mainExecutor
+            ), ContextCompat.getMainExecutor(internalCameraView.context)
         )
     }
 
@@ -406,7 +402,7 @@ class CustomCameraX {
         isPhotoCaptured = false
 
         //wait for relaunch useCase
-        imageCapture?.takePicture(outputOptions, mainExecutor, object : ImageCapture.OnImageSavedCallback {
+        imageCapture?.takePicture(outputOptions, analysisExecutor, object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)

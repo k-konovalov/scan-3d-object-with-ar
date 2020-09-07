@@ -1,10 +1,10 @@
-package com.arvrlab.reconstructcamera
+package com.arvrlab.reconstructcamera.core
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.arvrlab.reconstructcamera.scenario.ScenarioFragment
-import com.arvrlab.reconstructcamera.ui.main.MainFragment
+import com.arvrlab.reconstructcamera.fragments.ScenarioFragment
+import com.arvrlab.reconstructcamera.fragments.CameraFragment
 
 
 class ViewPagerAdapterAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
@@ -13,8 +13,8 @@ class ViewPagerAdapterAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
 
     override fun createFragment(position: Int): Fragment =
         when (position) {
-            0 -> MainFragment()
+            0 -> CameraFragment()
             1 -> ScenarioFragment()
-            else -> MainFragment()
+            else -> CameraFragment()
         }
 }

@@ -1,17 +1,16 @@
-package com.arvrlab.reconstructcamera.scenario
+package com.arvrlab.reconstructcamera.fragments
 
 import android.os.Bundle
-import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.fragment.app.DialogFragment
-import com.arvrlab.reconstructcamera.CustomCameraX
+import com.arvrlab.reconstructcamera.core.CustomCameraX
 import com.arvrlab.reconstructcamera.R
 import com.google.android.material.textfield.TextInputLayout
 
-class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters, private val cameraX: CustomCameraX,val onSubmitButtonClicked: (CustomCameraX.Parameters.ManualParameters) -> Unit) : DialogFragment(){
+class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parameters.ManualParameters, private val cameraX: CustomCameraX, val onSubmitButtonClicked: (CustomCameraX.Parameters.ManualParameters) -> Unit) : DialogFragment(){
     private  val etIso: EditText by lazy { requireView().findViewById<EditText>(R.id.etIso) }
     private  val etFocus: EditText by lazy { requireView().findViewById<EditText>(R.id.etFocus) }
     private  val etWb: EditText by lazy { requireView().findViewById<EditText>(R.id.etWB) }
@@ -28,7 +27,7 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
         "1/8" to 1.0 / 8,
         "1/15" to 1.0 / 15,
         "1/30" to 1.0 / 30,
-        "1/125" to 1.0 / 60,
+        "1/60" to 1.0 / 60,
         "1/125" to 1.0 / 125,
         "1/250" to 1.0 / 250,
         "1/500" to 1.0 / 500,
@@ -69,7 +68,7 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
 
     override fun onResume() {
         super.onResume()
-        dialog?.window?.setLayout(
+        requireDialog().window?.setLayout(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
