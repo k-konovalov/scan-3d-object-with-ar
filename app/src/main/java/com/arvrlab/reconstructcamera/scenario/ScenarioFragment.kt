@@ -52,6 +52,10 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 //            errorMessage.observe(activityContext, Observer {
 //                showToastWith(it)
 //            })
+            isBracketingReady.observe(activityContext, Observer {
+                if(it && etDelayBetweenPhoto.text.isNotEmpty() && etNumberOfPhotos.text.isNotEmpty())
+                    launchBracketing(requireContext(), etDelayBetweenPhoto.text.toString().toInt(), etNumberOfPhotos.text.toString().toInt())
+            })
         }
     }
 
@@ -76,7 +80,8 @@ class ScenarioFragment : Fragment(R.layout.scenario_fragment) {
 
     private fun initOnClickListeners() {
         fabTakePicture.setOnClickListener {
-            singleViewModel.cameraX.takePhoto(requireContext())
+            singleViewModel.cameraX.prepareForBracketing()
+            //singleViewModel.cameraX.takePhoto(requireContext())
         }
 
         fabFirstPhoto.setOnClickListener {

@@ -24,12 +24,16 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnNextLayout
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import com.arvrlab.reconstructcamera.CustomCameraX.Parameters.*
 import com.arvrlab.reconstructcamera.core.*
 import com.google.common.util.concurrent.ListenableFuture
+import kotlinx.coroutines.*
 import java.io.File
+import java.lang.Runnable
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
@@ -40,7 +44,7 @@ import kotlin.math.min
 
 
 class CustomCameraX {
-    open class Parameters {
+    class Parameters {
         data class ManualParameters(val shutterIndex: Int, val iso: Int, val wb: Int, val focus: Int){
             fun getDifferenceWith(second: ManualParameters): DifferenceParameter {
                 val differentParameter = mutableListOf<DifferenceParameter>()
@@ -57,7 +61,22 @@ class CustomCameraX {
             }
         }
 
-        data class DifferenceParameter(val firstPhoto: Int, val lastPhoto: Int, val type: ManualParametersType)
+        data class DifferenceParameter(val firstPhoto: Int, val lastPhoto: Int, val type: ManualParametersType){
+            fun intermediateValues(numPhotos: Int): List<Int>{
+                val arrayOfValues = mutableListOf<Int>()
+                var currentValue = firstPhoto
+                val step = lastPhoto / numPhotos
+
+                for (x in firstPhoto..lastPhoto){
+                    if(currentValue <= lastPhoto){
+                        arrayOfValues.add(currentValue)
+                        currentValue += step
+                    }
+                }
+
+                return arrayOfValues
+            }
+        }
 
         val empty = ManualParameters(0,0,0,0)
 
@@ -81,13 +100,15 @@ class CustomCameraX {
     private val RATIO_16_9_VALUE = 16.0 / 9.0
 
     //EV & WB
-    val wb = MutableLiveData<Int>(0)
-    val focus = MutableLiveData<Int>(0)
+    val wb = MutableLiveData<Int>()
+    val focus = MutableLiveData<Int>()
     val maxFocus = MutableLiveData<Int>()
     val iso = MutableLiveData<Int>()
     val maxIso = MutableLiveData<Int>()
     val frameDuration = MutableLiveData<Int>()
     val maxFrameDuration = MutableLiveData<Long>()
+    private fun MutableLiveData<Int>.notNullValue() = value ?: 0
+    val shutter = MutableLiveData<Int>(0)
     var shutterSpeeds = listOf(
         30.0,
         15.0,
@@ -112,12 +133,12 @@ class CustomCameraX {
         .filter { it < 1.0 } // less than second
         .reversed()
     val maxShutter = MutableLiveData<Int>()
-    val shutter = MutableLiveData<Int>(0)
     //Auto switch
-    val autoWB = MutableLiveData<Boolean>(true)
-    val autoExposition = MutableLiveData<Boolean>(true)
-    val autoFocus = MutableLiveData<Boolean>(true)
-    val flash = MutableLiveData<Boolean>(false)
+    val autoWB = MutableLiveData<Boolean>()
+    val autoExposition = MutableLiveData<Boolean>()
+    val autoFocus = MutableLiveData<Boolean>()
+    val flash = MutableLiveData<Boolean>()
+    private fun MutableLiveData<Boolean>.notNullValue() = value ?: false
 
     private  val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
 
@@ -129,6 +150,10 @@ class CustomCameraX {
     //
     var firstPhotoSettings = Parameters().empty
     var lastPhotoSettings = Parameters().empty
+    var differenceParameter = DifferenceParameter(0,0, ManualParametersType.NONE)
+    val isBracketingReady = MutableLiveData<Boolean>(false)
+    var isCameraRebinded = false
+    var isPhotoCaptured = false
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
         mainExecutor = ContextCompat.getMainExecutor(internalCameraView.context)
@@ -201,7 +226,7 @@ class CustomCameraX {
                     cameraLog += "\nExposure time: ${lower.toMS()}ms - ${upper.toMS()}ms"
                     if(id == "0") {
                         shutterSpeeds = shutterSpeeds.filter {
-                            val currentShutterInNS = (it * 1000).toNanoSecond() //some magic formula
+                            val currentShutterInNS = it.toNanoSecond() //some magic formula
                             val isSupportedByCamera = currentShutterInNS in lower..upper
                             isSupportedByCamera
                         }
@@ -265,20 +290,20 @@ class CustomCameraX {
         it.setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
         it.setTargetAspectRatio(screenAspectRatio)
         it.setTargetRotation(rotation)
-        it.setFlashMode(if (flash.value!!) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
+        it.setFlashMode(if (flash.notNullValue()) ImageCapture.FLASH_MODE_ON else ImageCapture.FLASH_MODE_OFF)
         attachSettingsTo(it)
         it.build()
     }
 
     private fun attachSettingsTo(useCaseBuilder: Any){
         Camera2Interop.Extender(useCaseBuilder as ExtendableBuilder<*>).run {
-            if(flash.value!!)setCaptureRequestOption(
+            if(flash.notNullValue())setCaptureRequestOption(
                 CaptureRequest.FLASH_MODE,
                 CameraMetadata.FLASH_MODE_TORCH
             )
             else setCaptureRequestOption(CaptureRequest.FLASH_MODE, CameraMetadata.FLASH_MODE_OFF)
             // adjust WB using seekbar's params
-            if (autoWB.value!!) setCaptureRequestOption(
+            if (autoWB.notNullValue()) setCaptureRequestOption(
                 CaptureRequest.CONTROL_AWB_MODE,
                 CameraMetadata.CONTROL_AWB_MODE_AUTO
             )
@@ -293,11 +318,11 @@ class CustomCameraX {
                 )
                 setCaptureRequestOption(
                     CaptureRequest.COLOR_CORRECTION_GAINS,
-                    colorTemperature(wb.value!!)
+                    colorTemperature(wb.notNullValue())
                 )
             }
             // abjust FOCUS using seekbar's params
-            if (autoFocus.value!!) setCaptureRequestOption(
+            if (autoFocus.notNullValue()) setCaptureRequestOption(
                 CaptureRequest.CONTROL_AF_MODE,
                 CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_VIDEO
             )
@@ -306,10 +331,10 @@ class CustomCameraX {
                     CaptureRequest.CONTROL_AF_MODE,
                     CameraMetadata.CONTROL_AF_MODE_OFF
                 )
-                setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.value!!.toFloat())
+                setCaptureRequestOption(CaptureRequest.LENS_FOCUS_DISTANCE, focus.notNullValue().toFloat())
             }
             // abjust ISO\Shutter using seekbar's params
-            if (autoExposition.value!!) setCaptureRequestOption(
+            if (autoExposition.notNullValue()) setCaptureRequestOption(
                 CaptureRequest.CONTROL_AE_MODE,
                 CameraMetadata.CONTROL_AE_MODE_ON
             )
@@ -320,14 +345,11 @@ class CustomCameraX {
                     CaptureRequest.CONTROL_AE_MODE,
                     CameraMetadata.CONTROL_AE_MODE_OFF
                 )
-                setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.value!!)
+                setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, iso.notNullValue())
 
                 // abjust Exposure using seekbar's params
-                val evChoice = (shutterSpeeds[shutter.value!!] * 1000)
-                setCaptureRequestOption(
-                    CaptureRequest.SENSOR_EXPOSURE_TIME,
-                    evChoice.toNanoSecond()
-                ) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
+                val evChoice = (shutterSpeeds[shutter.notNullValue()])
+                setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, evChoice.toNanoSecond()) //MS -> NS (1.0/60) * 1000).toNanoSecond() also preview FPS
             }
         }
     }
@@ -340,20 +362,15 @@ class CustomCameraX {
     ) {
         try {
             // A variable number of use-cases can be passed here - camera provides access to CameraControl & CameraInfo
-            camera = cameraProvider?.bindToLifecycle(
-                viewLifecycleOwner, cameraSelector, preview, imageCapture
-            )
+            camera = cameraProvider?.bindToLifecycle(viewLifecycleOwner, cameraSelector, preview, imageCapture)
 
             val captureSize = imageCapture?.attachedSurfaceResolution ?: Size(0, 0)
             val previewSize = preview?.attachedSurfaceResolution ?: Size(0, 0)
             val analyzeSize = imageAnalyzer?.attachedSurfaceResolution ?: Size(0, 0)
 
-            Log.e(
-                TAG,
-                "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize"
-            )
-            //internalCameraView.getPreferredImplementationMode() = PreviewView.ImplementationMode.TEXTURE_VIEW
+            Log.e(TAG, "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize")
             preview?.setSurfaceProvider(internalCameraView.createSurfaceProvider())
+            isCameraRebinded = true
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
@@ -378,7 +395,7 @@ class CustomCameraX {
 
     private fun Long.toMS(): Int = (this / million()).toInt() // NS -> MS
     private fun Int.toNanoSecond(): Long = (this * million()) // MS -> NS
-    private fun Double.toNanoSecond(): Long = (this * million()).toLong()
+    private fun Double.toNanoSecond(): Long = (this * million() * 1000).toLong()
     private fun million() = (1 * 1000 * 1000L)
 
     fun takePhoto(context: Context) {
@@ -386,13 +403,14 @@ class CustomCameraX {
         val fileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
         val outputOptions = getOutputFileOptions(context.contentResolver, appName, fileName)
 
-        imageCapture?.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
+        isPhotoCaptured = false
+
+        //wait for relaunch useCase
+        imageCapture?.takePicture(outputOptions, mainExecutor, object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)
+                        isPhotoCaptured = true
                     }
                 }
 
@@ -444,54 +462,68 @@ class CustomCameraX {
         } else Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
     }
 
-    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long, differenceParameter: DifferenceParameter? = null){
-        val totalTimeForOnePhotoSeries = numPhotos * interval
-        Toast.makeText(
-            context,
-            "Timer set with interval $interval & numPhotos: $numPhotos:",
-            Toast.LENGTH_SHORT
-        ).show()
-        photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
-            override fun onTick(p0: Long) {
-                takePhoto(context)
-            }
-
-            override fun onFinish() {
-                isPhotoTimerWork = false
-                Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show()
-            }
-        }
+    fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long){
         if(isPhotoTimerWork) {
             isPhotoTimerWork = !isPhotoTimerWork
-            photoTimer?.onFinish()
-        }
-        else {
+            photoTimer?.cancel()
+        } else {
+            val totalTimeForOnePhotoSeries = numPhotos * interval
+            Toast.makeText(context, "Timer set with interval $interval & numPhotos: $numPhotos:", Toast.LENGTH_SHORT).show()
+
+            photoTimer = object : CountDownTimer(totalTimeForOnePhotoSeries * SECOND, interval * SECOND){
+                override fun onTick(p0: Long) {
+
+                    takePhoto(context)
+                }
+
+                override fun onFinish() {
+                    isPhotoTimerWork = false
+                    Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show()
+                }
+            }
             isPhotoTimerWork = !isPhotoTimerWork
             photoTimer?.start()
         }
     }
 
     fun prepareForBracketing() {
-        val firstPhotoSettings = ManualParameters(0,0,0,0)
-        val lastPhotoSettings = ManualParameters(0,30,0,0)
         if (firstPhotoSettings == lastPhotoSettings) return
         val smth = firstPhotoSettings.getDifferenceWith(lastPhotoSettings)
         smth.run {
             when(type){
                 ManualParametersType.NONE -> return
-                /*ManualParametersType.SHUTTER ->
-                ManualParametersType.ISO -> {}
-                ManualParametersType.WB -> {}
-                ManualParametersType.FOCUS -> {}*/
                 else -> {
                     Log.e(TAG, "$type:$firstPhoto->$lastPhoto")
-                    launchBracketing(this)
+                    differenceParameter = this
+                    isBracketingReady.postValue(true)
                 }
             }
         }
     }
 
-    fun launchBracketing(differenceParameter: DifferenceParameter) {
-        //initCamera()
+    fun launchBracketing(context: Context, interval: Int = 1, numPhotos: Int = 1) =
+        CoroutineScope(Dispatchers.Default).launch {
+            val arrayOfValues = differenceParameter.intermediateValues(numPhotos)
+            arrayOfValues.forEach { currentValue ->
+                provideParametersShift(currentValue)
+                delay(interval * SECOND)
+
+                takePhoto(context)
+                while (isActive) { //
+                    if (isPhotoCaptured) break
+                    else delay(50)
+                }
+            }
+            withContext(Dispatchers.Main) { Toast.makeText(context, "Capture series over", Toast.LENGTH_SHORT).show() }
     }
+
+    private fun provideParametersShift(currentValue: Int) =
+        when (differenceParameter.type) {
+            ManualParametersType.SHUTTER -> shutter.postValue(currentValue)
+            ManualParametersType.ISO -> iso.postValue(currentValue)
+            ManualParametersType.WB -> wb.postValue(currentValue)
+            ManualParametersType.FOCUS -> focus.postValue(currentValue)
+            else -> { }
+        }
+
 }
