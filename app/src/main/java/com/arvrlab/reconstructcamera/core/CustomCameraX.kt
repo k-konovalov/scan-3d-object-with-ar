@@ -40,7 +40,6 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-
 class CustomCameraX {
     class Parameters {
         data class ManualParameters(val shutterIndex: Int, val iso: Int, val wb: Int, val focus: Int){
@@ -139,6 +138,7 @@ class CustomCameraX {
     val autoExposition = MutableLiveData<Boolean>()
     val autoFocus = MutableLiveData<Boolean>()
     val flash = MutableLiveData<Boolean>()
+    val capturedPhotoCount = MutableLiveData<Int>()
     private fun MutableLiveData<Boolean>.notNullValue() = value ?: false
 
     private val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
@@ -415,6 +415,7 @@ class CustomCameraX {
                     outputFileResults.savedUri?.run {
                         replaceImageInPictureDir(context, this, appName)
                         isPhotoCaptured = true
+                        capturedPhotoCount.value = capturedPhotoCount.notNullValue() + 1
                     }
                 }
 
@@ -462,8 +463,10 @@ class CustomCameraX {
                 context.sendBroadcast(this)
             }
 
-            Toast.makeText(context, "Photo captured to\n${newPhotoFile.absolutePath}", Toast.LENGTH_SHORT).show()
-        } else Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
+           // Toast.makeText(context, "Photo captured to\n${newPhotoFile.absolutePath}", Toast.LENGTH_SHORT).show()
+        }
+        //else
+            //Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
     }
 
     fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long){

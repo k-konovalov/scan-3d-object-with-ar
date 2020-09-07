@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/snackView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvSnackMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:textColor="@android:color/black" />
+
+    <com.warkiz.widget.IndicatorSeekBar
+        android:id="@+id/pbSnackProgress"
+        app:isb_thumb_drawable="@drawable/ic_photo"
+        app:isb_thumb_color="@color/colorAccent"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        android:progressTint="@color/colorAccent"
+        app:isb_show_thumb_text="true" />
+
+</LinearLayout>
