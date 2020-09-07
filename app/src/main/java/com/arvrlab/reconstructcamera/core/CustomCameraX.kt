@@ -61,12 +61,16 @@ class CustomCameraX {
 
         data class DifferenceParameter(val firstPhoto: Int, val lastPhoto: Int, val type: ManualParametersType){
             fun intermediateValues(numPhotos: Int): List<Int>{
-                val arrayOfValues = mutableListOf<Int>()
-                var currentValue = firstPhoto
-                val step = lastPhoto / numPhotos
+                val firstValue = if(firstPhoto < lastPhoto) firstPhoto else lastPhoto
+                val lastValue = if(firstPhoto < lastPhoto) lastPhoto else firstPhoto
 
-                for (x in firstPhoto..lastPhoto){
-                    if(currentValue <= lastPhoto){
+                val arrayOfValues = mutableListOf<Int>()
+                var currentValue = firstValue
+                val calculatedStep = lastValue / numPhotos
+                val step = if(calculatedStep == 0) 1 else calculatedStep
+
+                for (x in firstValue..lastValue){
+                    if(currentValue <= lastValue){
                         arrayOfValues.add(currentValue)
                         currentValue += step
                     }
@@ -243,7 +247,7 @@ class CustomCameraX {
                     }
                 }
 
-            Log.e(TAG, cameraLog)
+            Log.i(TAG, cameraLog)
             //if (facing == lensFacing) return@forEach
         }
     }
@@ -270,11 +274,11 @@ class CustomCameraX {
 
     private fun logCurrentCameraSettings(){
         var log = "Current Camera Settings:"
-        log += "\nFocus: ${focus.value}"
-        log += "\nISO: ${iso.value}"
-        log += "\nShutter: ${shutter.value}ms"
+        log += "\nFocus: ${focus.notNullValue()}"
+        log += "\nISO: ${iso.notNullValue()}"
+        log += "\nShutter: ${shutter.notNullValue()}ms"
         //log += "\nFrame Duration: ${frameDuration.value}ms"
-        Log.e(TAG, log)
+        Log.i(TAG, log)
     }
 
     private fun setupAndBuildPreview(custoMSize: Size, rotation: Int, screenAspectRatio: Int): Preview = Preview.Builder().let {
@@ -368,7 +372,7 @@ class CustomCameraX {
             val previewSize = preview?.attachedSurfaceResolution ?: Size(0, 0)
             val analyzeSize = imageAnalyzer?.attachedSurfaceResolution ?: Size(0, 0)
 
-            Log.e(TAG, "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize")
+            Log.i(TAG, "Use case res: capture_$captureSize preview_$previewSize analyze_$analyzeSize")
             preview?.setSurfaceProvider(internalCameraView.createSurfaceProvider())
             isCameraRebinded = true
         } catch (exc: Exception) {
@@ -493,7 +497,7 @@ class CustomCameraX {
             when(type){
                 ManualParametersType.NONE -> return
                 else -> {
-                    Log.e(TAG, "$type:$firstPhoto->$lastPhoto")
+                    Log.i(TAG, "$type:$firstPhoto->$lastPhoto")
                     differenceParameter = this
                     isBracketingReady.postValue(true)
                 }

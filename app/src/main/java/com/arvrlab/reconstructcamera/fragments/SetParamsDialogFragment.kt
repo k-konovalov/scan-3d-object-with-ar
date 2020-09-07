@@ -42,8 +42,7 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterSpeeds.filter { it.value < 1.0 }.keys.toList()
+        ArrayAdapter<String>(requireContext(), R.layout.spinner_item, shutterSpeeds.filter { it.value < 1.0 }.keys.toList().reversed()
         ).also { spinnerShutter.adapter = it }
         manualParameters.run {
             etIso.setText(iso.toString())
@@ -55,8 +54,6 @@ class SetParamsDialogFragment(private val manualParameters: CustomCameraX.Parame
             view.findViewById<TextInputLayout>(R.id.tilIso).hint = "ISO (50 - ${maxIso.value}):"
             view.findViewById<TextInputLayout>(R.id.tilFocus).hint = "Focus (0 - ${maxFocus.value}):"
         }
-
-
 
         view.findViewById<Button>(R.id.btnSubmit).setOnClickListener {
             onSubmitButtonClicked()
