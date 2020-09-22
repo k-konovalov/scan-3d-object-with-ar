@@ -30,8 +30,11 @@ import com.arvrlab.reconstructcamera.R
 import com.arvrlab.reconstructcamera.core.CustomCameraX.Parameters.*
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.*
+import net.gotev.uploadservice.UploadServiceConfig
+import net.gotev.uploadservice.ftp.FTPUploadRequest
 import java.io.File
 import java.lang.Runnable
+import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
@@ -159,6 +162,8 @@ class CustomCameraX {
     val isBracketingReady = MutableLiveData<Boolean>(false)
     var isCameraRebinded = false
     var isPhotoCaptured = false
+
+    val lastCapturedUri = MutableLiveData<Pair<String, String>>()
 
     fun initCamera(viewLifecycleOwner: LifecycleOwner, internalCameraView: PreviewView) {
         // Get screen metrics used to setup camera for full screen resolution
@@ -413,7 +418,9 @@ class CustomCameraX {
         imageCapture?.takePicture(outputOptions, ContextCompat.getMainExecutor(context), object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     outputFileResults.savedUri?.run {
-                        replaceImageInPictureDir(context, this, appName)
+                        replaceImageInPictureDir(context, this, appName)?.run {
+                            lastCapturedUri.postValue(this)
+                        }
                         isPhotoCaptured = true
                         capturedPhotoCount.value = capturedPhotoCount.notNullValue() + 1
                     }
@@ -443,11 +450,12 @@ class CustomCameraX {
             }
         }
 
-    private fun replaceImageInPictureDir(context: Context, photoFileUri: Uri, appName: String) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            val photoFilePath = UriFileUtils.getPath(context, photoFileUri) ?: return
-            val oldPhotoFile = File(photoFilePath)
+    private fun replaceImageInPictureDir(context: Context, photoFileUri: Uri, appName: String): Pair<String, String>? {
+        val photoFilePath = UriFileUtils.getPath(context, photoFileUri) ?: return null
+        val oldFileName = photoFilePath.split("/").last()
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val oldPhotoFile = File(photoFilePath)
             val newFileName = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
             val storageDir = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).path}/$appName"
             val newPhotoFile = File("$storageDir/$newFileName.${oldPhotoFile.extension}")
@@ -463,10 +471,12 @@ class CustomCameraX {
                 context.sendBroadcast(this)
             }
 
+            return Pair("$storageDir/$newFileName.${oldPhotoFile.extension}","$newFileName.${oldPhotoFile.extension}") //path&filename
            // Toast.makeText(context, "Photo captured to\n${newPhotoFile.absolutePath}", Toast.LENGTH_SHORT).show()
         }
-        //else
-            //Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
+
+        return Pair(photoFilePath, oldFileName)
+        //else Toast.makeText(context, "Photo captured to\nPictures/$appName", Toast.LENGTH_SHORT).show()
     }
 
     fun initPhotoTimer(context: Context, interval: Long, numPhotos: Long){
@@ -532,5 +542,4 @@ class CustomCameraX {
             ManualParametersType.FOCUS -> focus.postValue(currentValue)
             else -> { }
         }
-
 }
