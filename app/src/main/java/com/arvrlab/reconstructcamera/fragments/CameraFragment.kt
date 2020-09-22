@@ -1,5 +1,6 @@
 package com.arvrlab.reconstructcamera.fragments
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -21,6 +22,7 @@ class CameraFragment : Fragment(R.layout.main_fragment) {
 
     private val singleViewModel : SingleViewModel by activityViewModels()
     private val activityContext by lazy { requireActivity() }
+    private val dialogFragment by lazy { SettingsFragment(singleViewModel) }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -99,8 +101,9 @@ class CameraFragment : Fragment(R.layout.main_fragment) {
                 singleViewModel.cameraX.initPhotoTimer(requireContext(),etDelayBetweenPhoto.text.toString().toLong(), etNumberOfPhotos.text.toString().toLong())
             else singleViewModel.cameraX.takePhoto(requireContext())
         }
-        /*btnStartTimer.setOnClickListener {
-        }*/
+        btnSettings.setOnClickListener {
+            dialogFragment.show(parentFragmentManager, "Settings")
+        }
     }
 
     private fun initDoOnTextChangedListeners() {

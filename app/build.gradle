@@ -60,4 +60,10 @@ dependencies {
     api "androidx.camera:camera-lifecycle:1.0.0-beta08"
     api "androidx.camera:camera-view:1.0.0-alpha15"
 
+    def uploadServiceVersion = "4.4.0"
+    implementation "net.gotev:uploadservice:$uploadServiceVersion"
+    implementation "net.gotev:uploadservice-ftp:$uploadServiceVersion"
+
+
+    implementation 'androidx.preference:preference:1.1.1'
 }

@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">3D Reconstruct Camera</string>
+
+    <!-- Prefs -->
+    <string name="pref_ftp_address_key" translatable="false">ftp_address_preference</string>
+    <string name="pref_ftp_port_key" translatable="false">ftp_port_preference</string>
+    <string name="pref_ftp_port_default" translatable="false">21</string>
+    <string name="pref_ftp_username_key" translatable="false">ftp_username_preference</string>
+    <string name="pref_ftp_password_key" translatable="false">ftp_password_preference</string>
+    <string name="pref_ftp_default" translatable="false"></string>
+
 </resources>
