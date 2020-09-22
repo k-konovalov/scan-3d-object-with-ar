@@ -1,5 +1,6 @@
 package com.example.android.ar
 
+import android.app.Activity
 import android.content.DialogInterface
 import android.opengl.GLES30
 import android.opengl.Matrix
@@ -29,7 +30,7 @@ import java.util.*
  * ARCore API. The application will display any detected planes and will allow the user to tap on a
  * plane to place a 3d model of the Android robot.
  */
-class MainActivity : AppCompatActivity(), SampleRender.Renderer {
+class MainActivity : Activity(), SampleRender.Renderer {
 
     private var installRequested = false
     private var hasSetTextureNames = false
