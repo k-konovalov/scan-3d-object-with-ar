@@ -1,2 +1,3 @@
-include ':app'
+include ':app',
+        ':ar_core'
 rootProject.name = "3D Reconstruct Camera"
