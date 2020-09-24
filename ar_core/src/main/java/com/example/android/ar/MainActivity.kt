@@ -11,7 +11,6 @@ import android.view.MotionEvent
 import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import com.example.android.ar.helpers.*
 import com.example.android.ar.samplerender.*
 import com.example.android.ar.samplerender.arcore.BackgroundRenderer
@@ -57,7 +56,7 @@ class MainActivity : Activity(), SampleRender.Renderer {
     private val depthSettings: DepthSettings = DepthSettings()
     private val instantPlacementSettings: InstantPlacementSettings = InstantPlacementSettings()
 
-    private var render: SampleRender? = null
+    private val render: SampleRender by lazy { SampleRender(surfaceView, this, assets) }
     private var planeRenderer: PlaneRenderer? = null
     private var backgroundRenderer: BackgroundRenderer? = null
 
@@ -99,8 +98,8 @@ class MainActivity : Activity(), SampleRender.Renderer {
 
         surfaceView.setOnTouchListener(tapHelper)
 
-        // Set up renderer.
-        render = SampleRender(surfaceView, this, assets)
+        // Set up renderer. moved to lazy
+        render
 
         installRequested = false
         calculateUVTransform = true
@@ -250,7 +249,7 @@ class MainActivity : Activity(), SampleRender.Renderer {
                 POINT_CLOUD_FRAGMENT_SHADER_NAME,
                 null
             ).set4("u_Color", floatArrayOf(31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f))
-                .set1("u_PointSize", 5.0f)
+                .set1("u_PointSize", 10.0f)//old = 5
 
             // four entries per vertex: X, Y, Z, confidence
             pointCloudVertexBuffer = VertexBuffer(render, 4,null)
@@ -343,7 +342,7 @@ class MainActivity : Activity(), SampleRender.Renderer {
             handleTap(frame, camera)
 
             // If frame is ready, render camera preview image to the GL surface.
-            backgroundRenderer?.draw(render, frame, depthSettings.depthColorVisualizationEnabled())
+            //backgroundRenderer?.draw(render, frame, depthSettings.depthColorVisualizationEnabled())
 
             // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
             trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
@@ -364,78 +363,82 @@ class MainActivity : Activity(), SampleRender.Renderer {
             // The first three components are color scaling factors.
             // The last one is the average pixel intensity in gamma space.
             val colorCorrectionRgba = FloatArray(4)
-            frame.lightEstimate.getColorCorrection(colorCorrectionRgba, 0)
-            frame.acquirePointCloud().use { pointCloud ->
-                if (pointCloud.timestamp > lastPointCloudTimestamp) {
-                    pointCloudVertexBuffer?.set(pointCloud.points)
-                    lastPointCloudTimestamp = pointCloud.timestamp
-                }
-
-                Matrix.multiplyMM(
-                    modelViewProjectionMatrix,
-                    0,
-                    projectionMatrix,
-                    0,
-                    viewMatrix,
-                    0
-                )
-
-                pointCloudShader?.setMatrix4("u_ModelViewProjection", modelViewProjectionMatrix)
-                render.draw(pointCloudMesh, pointCloudShader)
+            frame.run {
+                lightEstimate.getColorCorrection(colorCorrectionRgba, 0)
+                drawPointCloud()
             }
 
             // No tracking error at this point. If we detected any plane, then hide the
             // message UI, otherwise show searchingPlane message.
-            if (hasTrackingPlane()) {
-                messageSnackbarHelper.hide(this)
-            } else {
-                messageSnackbarHelper.showMessage(this, SEARCHING_PLANE_MESSAGE)
-            }
+            if (hasTrackingPlane()) messageSnackbarHelper.hide(this)
+            else messageSnackbarHelper.showMessage(this, SEARCHING_PLANE_MESSAGE)
 
             // Visualize planes.
-            planeRenderer?.drawPlanes(
-                render,
-                session?.getAllTrackables(Plane::class.java),
-                camera.displayOrientedPose,
-                projectionMatrix
-            )
+            planeRenderer?.drawPlanes(render, session?.getAllTrackables(Plane::class.java), camera.displayOrientedPose, projectionMatrix)
 
-            // Visualize anchors created by touch.
-             anchors.forEach { coloredAnchor ->
-                 if (coloredAnchor.anchor.trackingState == TrackingState.TRACKING) {
-
-                     // For anchors attached to Instant Placement points, update the color once the tracking
-                     // method becomes FULL_TRACKING.
-                     val isFullTracking = coloredAnchor.trackable is InstantPlacementPoint
-                             && coloredAnchor.trackable.trackingMethod == InstantPlacementPoint.TrackingMethod.FULL_TRACKING
-                     if (isFullTracking) {
-                         coloredAnchor.color = getTrackableColor(coloredAnchor.trackable)
-                     }
-
-                     // Get the current pose of an Anchor in world space. The Anchor pose is updated
-                     // during calls to session.update() as ARCore refines its estimate of the world.
-                     coloredAnchor.anchor.pose.toMatrix(modelMatrix, 0)
-
-                     // Calculate model/view/projection matrices and view-space light direction
-                     Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
-                     Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-                     Matrix.multiplyMV(viewLightDirection, 0, viewMatrix, 0, LIGHT_DIRECTION, 0)
-
-                     // Update shader properties and draw
-                     val shader: Shader? =
-                         if (depthSettings.useDepthForOcclusion()) virtualObjectDepthShader else virtualObjectShader
-                     shader
-                         ?.setMatrix4("u_ModelView", modelViewMatrix)
-                         ?.setMatrix4("u_ModelViewProjection", modelViewProjectionMatrix)
-                         ?.set4("u_ColorCorrection", colorCorrectionRgba)
-                         ?.set4("u_ViewLightDirection", viewLightDirection)
-                         ?.set3("u_AlbedoColor", coloredAnchor.color)
-                     render.draw(virtualObjectMesh, shader)
-                 }
-             }
+            visualizeAnchors(colorCorrectionRgba)
         } catch (t: Throwable) {
             // Avoid crashing the application due to unhandled exceptions.
             Log.e(TAG, "Exception on the OpenGL thread", t)
+        }
+    }
+
+    private fun Frame.drawPointCloud() {
+        acquirePointCloud().use { pointCloud ->
+            pointCloud.points.capacity()
+
+            if (pointCloud.timestamp > lastPointCloudTimestamp) {
+                pointCloudVertexBuffer?.set(pointCloud.points)
+                lastPointCloudTimestamp = pointCloud.timestamp
+            }
+
+            Matrix.multiplyMM(
+                modelViewProjectionMatrix,
+                0,
+                projectionMatrix,
+                0,
+                viewMatrix,
+                0
+            )
+
+            pointCloudShader?.setMatrix4("u_ModelViewProjection", modelViewProjectionMatrix)
+            render.draw(pointCloudMesh, pointCloudShader)
+        }
+    }
+
+    /** Visualize anchors created by touch.*/
+    private fun visualizeAnchors(colorCorrectionRgba: FloatArray) {
+        Log.e("Test", anchors.size.toString())
+        anchors.forEach { coloredAnchor ->
+            if (coloredAnchor.anchor.trackingState == TrackingState.TRACKING) {
+
+                // For anchors attached to Instant Placement points, update the color once the tracking
+                // method becomes FULL_TRACKING.
+                val isFullTracking = coloredAnchor.trackable is InstantPlacementPoint
+                        && coloredAnchor.trackable.trackingMethod == InstantPlacementPoint.TrackingMethod.FULL_TRACKING
+                if (isFullTracking) {
+                    coloredAnchor.color = getTrackableColor(coloredAnchor.trackable)
+                }
+
+                // Get the current pose of an Anchor in world space. The Anchor pose is updated
+                // during calls to session.update() as ARCore refines its estimate of the world.
+                coloredAnchor.anchor.pose.toMatrix(modelMatrix, 0)
+
+                // Calculate model/view/projection matrices and view-space light direction
+                Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+                Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+                Matrix.multiplyMV(viewLightDirection, 0, viewMatrix, 0, LIGHT_DIRECTION, 0)
+
+                // Update shader properties and draw
+                val shader: Shader? = if (depthSettings.useDepthForOcclusion()) virtualObjectDepthShader else virtualObjectShader
+                shader
+                    ?.setMatrix4("u_ModelView", modelViewMatrix)
+                    ?.setMatrix4("u_ModelViewProjection", modelViewProjectionMatrix)
+                    ?.set4("u_ColorCorrection", colorCorrectionRgba)
+                    ?.set4("u_ViewLightDirection", viewLightDirection)
+                    ?.set3("u_AlbedoColor", coloredAnchor.color)
+                render.draw(virtualObjectMesh, shader)
+            }
         }
     }
 
@@ -459,7 +462,7 @@ class MainActivity : Activity(), SampleRender.Renderer {
                 if (wasHitInsideThePlanePolygon) {
                     // Cap the number of objects created. This avoids overloading both the
                     // rendering system and ARCore.
-                    if (anchors.size >= 20) {
+                    if (anchors.size >= 1) {
                         anchors[0].anchor.detach()
                         anchors.removeAt(0)
                     }
@@ -645,7 +648,7 @@ class MainActivity : Activity(), SampleRender.Renderer {
         // values for AR experiences where users are expected to place objects on surfaces close to the
         // camera. Use larger values for experiences where the user will likely be standing and trying to
         // place an object on the ground or floor in front of them.
-        private const val APPROXIMATE_DISTANCE_METERS = 2.0f
+        private const val APPROXIMATE_DISTANCE_METERS = 0.3f
 
         // Point Cloud
         private const val POINT_CLOUD_VERTEX_SHADER_NAME = "shaders/point_cloud.vert"
