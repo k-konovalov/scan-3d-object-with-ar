@@ -5,46 +5,80 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
-    tools:context=".Measurement">
+    tools:context=".MeasurementActivity">
 
     <LinearLayout
+        android:id="@+id/llCameraPosition"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="1dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvCameraX"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="X"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/tvCameraY"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Y"
+            android:textAlignment="center" />
+
+        <TextView
+            android:id="@+id/tvCameraZ"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Z"
+            android:textAlignment="center" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llGeneral"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <fragment
-            android:name="com.google.ar.sceneform.ux.ArFragment"
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/sceneform_fragment"
+            android:name="com.google.ar.sceneform.ux.ArFragment"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="9"/>
+            android:layout_weight="9" />
 
         <TextView
-            android:id="@+id/distance_view"
+            android:id="@+id/tvDistance"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.5"
             android:layout_gravity="bottom"
+            android:layout_weight="0.5"
             android:gravity="center"
             android:padding="8dp"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 
         <TableLayout
-            android:id="@+id/multiple_distance_table"
+            android:id="@+id/tlMultipleDistance"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.0"/>
+            android:layout_weight="0.0" />
 
         <Spinner
-            android:id="@+id/distance_mode_spinner"
+            android:id="@+id/sDistanceMode"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.5"
             android:spinnerMode="dialog" />
 
         <Button
-            android:id="@+id/clearButton"
+            android:id="@+id/btnClear"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="0.5"
