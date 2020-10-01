@@ -1,4 +1,4 @@
-package com.shibuiwilliam.arcoremeasurement
+package com.shibuiwilliam.measurement
 
 import android.annotation.SuppressLint
 import android.content.Context

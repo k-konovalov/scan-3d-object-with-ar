@@ -1,4 +1,4 @@
-package com.shibuiwilliam.arcoremeasurement
+package com.shibuiwilliam.measurement
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

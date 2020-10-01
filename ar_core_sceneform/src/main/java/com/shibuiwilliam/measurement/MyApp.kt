@@ -1,12 +1,10 @@
-package com.shibuiwilliam.arcoremeasurement
+package com.shibuiwilliam.measurement
 
-import android.app.Activity
 import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import java.util.*
 import kotlin.system.exitProcess
 
 class MyApp: Application() {

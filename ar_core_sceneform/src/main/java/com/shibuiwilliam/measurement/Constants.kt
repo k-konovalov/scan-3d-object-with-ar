@@ -1,4 +1,4 @@
-package com.shibuiwilliam.arcoremeasurement
+package com.shibuiwilliam.measurement
 
 object Constants{
     const val maxNumMultiplePoints = 6
