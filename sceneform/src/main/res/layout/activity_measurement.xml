@@ -29,6 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackground"
         android:backgroundTint="@android:color/transparent"
         android:src="@drawable/photo_camera" />
 
