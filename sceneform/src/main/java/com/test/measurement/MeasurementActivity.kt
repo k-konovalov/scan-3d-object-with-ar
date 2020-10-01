@@ -2,21 +2,35 @@ package com.test.measurement
 
 import android.app.ActivityManager
 import android.app.AlertDialog
+import android.content.ContentValues
 import android.content.Context
-import android.os.Bundle
+import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
+import android.os.*
+import android.provider.MediaStore
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.PixelCopy
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.snackbar.Snackbar
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
 import com.google.ar.sceneform.AnchorNode
+import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.ArFragment
 import kotlinx.android.synthetic.main.activity_measurement.*
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.acos
 import kotlin.math.pow
@@ -43,6 +57,10 @@ class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
 
         arFragment.arSceneView?.scene?.addOnUpdateListener {
             updateAngle()
+        }
+
+        btnTakePhoto.setOnClickListener {
+            takePhoto()
         }
     }
 
@@ -209,6 +227,92 @@ class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
 
     private fun showAngle(angle: Int) {
         tvAngle?.text = "angle = $angle"
+    }
+
+    /** Add generateFilename method
+    A unique file name is needed for each picture we take.
+    The filename for the picture is generated using the standard pictures
+    directory, and then an album name of Sceneform. Each image name is based
+    on the time, so they won't overwrite each other. This path is also related
+    to the paths.xml file we added previously.
+     */
+
+    private fun generateFilename(): String? {
+        val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+        return getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString() + File.separator + "Sceneform/" + date + "_screenshot.jpeg"
+    }
+
+    /**Add saveBitmapToDisk method
+     * saveBitmapToDisk() writes out the bitmap to the file.
+     */
+    private fun saveBitmapToDisk(bitmap: Bitmap, filename: String) {
+        val out = File(filename)
+
+        if (!out.parentFile.exists()) {
+            out.parentFile.mkdirs()
+        }
+
+        try {
+            FileOutputStream(filename).use { outputStream ->
+                ByteArrayOutputStream().use { outputData ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData)
+                    outputData.writeTo(outputStream)
+                    outputStream.flush()
+                    outputStream.close()
+                }
+            }
+        } catch (ex: IOException) {
+            Log.e("abracadabra", ex.message.toString())
+            throw IOException("Failed to save bitmap to disk", ex)
+        }
+    }
+
+    /** Add the takePhoto method
+     * The method takePhoto() uses the PixelCopy API to capture a screenshot of the ArSceneView.
+     * It is asynchronous since it actually happens between frames. When the listener is called,
+     * the bitmap is saved to the disk, and then a snackbar is shown with an intent to open the image
+     * in the Pictures application.
+     */
+    private fun takePhoto() {
+        val filename = generateFilename()
+        val view: ArSceneView = arFragment.arSceneView
+
+        // Create a bitmap the size of the scene view.
+        val bitmap = Bitmap.createBitmap(
+            view.width, view.height,
+            Bitmap.Config.ARGB_8888
+        )
+
+        // Create a handler thread to offload the processing of the image.
+        val handlerThread = HandlerThread("PixelCopier")
+        handlerThread.start()
+        // Make the request to copy.
+        PixelCopy.request(view, bitmap, { copyResult ->
+            if (copyResult == PixelCopy.SUCCESS) {
+                try {
+                    saveBitmapToDisk(bitmap, filename ?: "")
+                } catch (e: IOException) {
+                    val toast = Toast.makeText(
+                        this, e.toString(),
+                        Toast.LENGTH_LONG
+                    )
+                    toast.show()
+                    return@request
+                }
+                Snackbar.make(
+                    findViewById(android.R.id.content),
+                    "Photo saved", Snackbar.LENGTH_SHORT
+                ).show()
+
+            } else {
+                val toast = Toast.makeText(
+                    this,
+                    "Failed to copyPixels: $copyResult", Toast.LENGTH_LONG
+                )
+                toast.show()
+            }
+            handlerThread.quitSafely()
+        }, Handler(handlerThread.looper))
     }
 
     companion object {

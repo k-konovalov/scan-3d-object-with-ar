@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path
+        name="my_images"
+        path="Pictures" />
+</paths>
+
+<!--    We also need a specifying the paths our application will write to.-->
+<!--    This file needs to be an xml resource file. Add this by selecting app/res in the project view,-->
+<!--    then right mouse clicking and select New > Directory. Name the directory xml.-->
