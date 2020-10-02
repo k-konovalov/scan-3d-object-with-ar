@@ -9,8 +9,10 @@ import android.view.PixelCopy
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.google.ar.core.HitResult
+import com.google.ar.core.Pose
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
+import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.Renderable
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -27,6 +29,9 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     val toastMessage = MutableLiveData<String>()
     val removeChild = MutableLiveData<AnchorNode>()
     val angleValue = MutableLiveData<Int>()
+
+    val distanceAB = MutableLiveData<Float>()
+    val distanceAC = MutableLiveData<Float>()
 
     private var triangle: Triangle = Triangle()
     private var tabClicked = false
@@ -56,7 +61,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
         // Make the request to copy.
         PixelCopy.request(view, bitmap, { copyResult ->
             if (copyResult == PixelCopy.SUCCESS) {
-                saveBitmapToDisk(bitmap, filename ?: "")
+                saveBitmapToDisk(bitmap, filename)
                 toastMessage.postValue("Photo saved")
             } else {
                 toastMessage.postValue("Failed to copyPixels: $copyResult")
@@ -72,7 +77,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
      * on the time, so they won't overwrite each other. This path is also related
      * to the paths.xml file we added previously.
      */
-    private fun generateFilename(): String? {
+    private fun generateFilename(): String {
         val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
         return app.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
             .toString() + File.separator + "Sceneform/" + date + "_screenshot.jpeg"
@@ -84,8 +89,10 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     private fun saveBitmapToDisk(bitmap: Bitmap, filename: String) {
         val out = File(filename)
 
-        if (!out.parentFile.exists()) {
-            out.parentFile.mkdirs()
+        out.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
+            }
         }
 
         try {
@@ -149,11 +156,23 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
                 setParent(arFragment.arSceneView?.scene)
             }
 
-            anchorNode2?.worldPosition?.x = cameraPose.tx()
+            anchorNode2?.worldPosition?.let { newCoords ->
 
-            triangle.previousCameraVector.x = anchorNode2?.worldPosition?.x ?: 0f
+                newCoords.x = cameraPose.tx()
+
+                triangle.previousCameraVector.apply {
+                    x = newCoords.x
+                    y = newCoords.y
+                    z = newCoords.z
+                }
+
+                triangle.currentCameraVector.apply {
+                    y = newCoords.y
+                    z = newCoords.z
+                }
+
+            }
         }
-
         angleValue.postValue(angle)
     }
 
@@ -188,7 +207,11 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     }
 
 
-    private fun createThreeDots(hitResult: HitResult, arrowRedDownRenderable: Renderable, arFragment: MyArFragment) {
+    private fun createThreeDots(
+        hitResult: HitResult,
+        arrowRedDownRenderable: Renderable,
+        arFragment: MyArFragment
+    ) {
         val anchor = hitResult.createAnchor()
 
         anchorNode1 = AnchorNode(anchor).apply {
@@ -204,5 +227,46 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
             setParent(arFragment.arSceneView?.scene)
         }
 
+    }
+
+    fun showDistances() {
+        val distanceAB =
+            calculateVectorDistance(triangle.previousCameraVector, triangle.objectVector)
+        val distanceBC =
+            calculateVectorDistance(triangle.currentCameraVector, triangle.previousCameraVector)
+        val distanceAC =
+            calculateVectorDistance(triangle.currentCameraVector, triangle.objectVector)
+
+        this.distanceAB.postValue(distanceAB)
+    }
+
+    private fun calculateVectorDistance(vector1: Vector, vector2: Vector): Float {
+        val x = vector1.x - vector2.x
+        val y = vector1.y - vector2.y
+        val z = vector1.z - vector2.z
+        return calculateDistance(x, y, z)
+    }
+
+    private fun calculateDistance(x: Float, y: Float, z: Float): Float {
+        val sqrt = sqrt(x.pow(2) + y.pow(2) + z.pow(2))
+        return sqrt
+    }
+
+    fun measureDistanceFromCamera(arFragment: MyArFragment) {
+        val frame = arFragment.arSceneView?.arFrame
+        distanceAC.postValue(
+            calculateDistance(
+                anchorNode1?.worldPosition ?: return,
+                frame?.camera?.pose ?: return
+            )
+        )
+    }
+
+    private fun calculateDistance(objectPose0: Vector3, objectPose1: Pose): Float {
+        return calculateDistance(
+            objectPose0.x - objectPose1.tx(),
+            objectPose0.y - objectPose1.ty(),
+            objectPose0.z - objectPose1.tz()
+        )
     }
 }

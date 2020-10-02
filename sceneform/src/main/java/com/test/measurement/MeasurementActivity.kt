@@ -13,17 +13,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
-import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.ViewRenderable
-import com.google.ar.sceneform.ux.ArFragment
 import kotlinx.android.synthetic.main.activity_measurement.*
-import java.io.IOException
-import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.acos
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
 
@@ -110,6 +103,8 @@ class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
 
         arFragment.arSceneView?.scene?.addOnUpdateListener {
             viewModel.updateAngle(arFragment, arrowRedDownRenderable ?: return@addOnUpdateListener)
+            viewModel.showDistances()
+            viewModel.measureDistanceFromCamera(arFragment)
         }
     }
 
@@ -132,7 +127,13 @@ class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
             tvAngle?.text = "angle = $angle"
         })
 
+        viewModel.distanceAB.observe(this, androidx.lifecycle.Observer { distanceAB ->
+            tvDistanceAB.text = (distanceAB * 100).toInt().toString()
+        })
 
+        viewModel.distanceAC.observe(this, androidx.lifecycle.Observer { distanceAC ->
+            tvDistanceAC.text = (distanceAC * 100).toInt().toString()
+        })
     }
 
     companion object {

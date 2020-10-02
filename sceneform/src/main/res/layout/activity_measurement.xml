@@ -23,6 +23,28 @@
         android:textColor="@android:color/white"
         android:textSize="14sp" />
 
+    <TextView
+        android:id="@+id/tvDistanceAB"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:layout_weight="0.5"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tvDistanceAC"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="bottom"
+        android:layout_weight="0.5"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
     <ImageButton
         android:id="@+id/btnTakePhoto"
         android:layout_width="wrap_content"
