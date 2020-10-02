@@ -27,18 +27,20 @@ import kotlin.math.sqrt
 class MeasurementViewModel(private val app: Application) : AndroidViewModel(app) {
 
     val toastMessage = MutableLiveData<String>()
+
     val removeChild = MutableLiveData<AnchorNode>()
+
     val angleValue = MutableLiveData<Int>()
 
     val distanceAB = MutableLiveData<Float>()
     val distanceAC = MutableLiveData<Float>()
 
-    private var triangle: Triangle = Triangle()
-    private var tabClicked = false
-
     private var anchorNode1: AnchorNode? = null
     private var anchorNode2: AnchorNode? = null
 
+    private var triangle: Triangle = Triangle()
+
+    private var tabClicked = false
 
     /** Add the takePhoto method
      * The method takePhoto() uses the PixelCopy API to capture a screenshot of the ArSceneView.
@@ -116,20 +118,16 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
      * @return Int - значение угла в градусах
      */
     private fun calculateABAngle(): Int {
-        val angleCos =
-            (triangle.previousCameraVector.x * triangle.currentCameraVector.x + triangle.previousCameraVector.y * triangle.currentCameraVector.y + triangle.previousCameraVector.z * triangle.currentCameraVector.z) /
-                    (sqrt(
-                        triangle.previousCameraVector.x.pow(2) + triangle.previousCameraVector.y.pow(
-                            2
-                        ) + triangle.previousCameraVector.z.pow(2)
-                    ) * sqrt(
-                        triangle.currentCameraVector.x.pow(2) + triangle.currentCameraVector.y.pow(
-                            2
-                        ) + triangle.currentCameraVector.z.pow(2)
-                    ))
+        // скалярное произведение координатным способом (перемножение координат двух веторов)
+        val scalarMultiplication = triangle.previousCameraVector.x * triangle.currentCameraVector.x + triangle.previousCameraVector.y * triangle.currentCameraVector.y + triangle.previousCameraVector.z * triangle.currentCameraVector.z
 
-        val angle =
-            acos(angleCos) * 180 / Math.PI // умножаем на 180 / Math.PIб чтобы перевсти радианы в градусы
+        val currentVector = sqrt(triangle.currentCameraVector.x.pow(2) + triangle.currentCameraVector.y.pow(2) + triangle.currentCameraVector.z.pow(2))
+        val previousVector = sqrt(triangle.previousCameraVector.x.pow(2) + triangle.previousCameraVector.y.pow(2) + triangle.previousCameraVector.z.pow(2))
+
+        val angleCos = scalarMultiplication / (previousVector * currentVector)
+
+        // умножаем на 180 / Math.PI, чтобы перевести радианы в градусы
+        val angle = acos(angleCos) * 180 / Math.PI
         return angle.toInt()
     }
 
@@ -183,29 +181,14 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
 
             createThreeDots(hitResult, arrowRedDownRenderable, arFragment)
 
-            triangle = Triangle(
-                Vector(
-                    anchorNode1?.worldPosition?.x ?: 0f,
-                    anchorNode1?.worldPosition?.y ?: 0f,
-                    anchorNode1?.worldPosition?.z ?: 0f
-                ),
-                Vector(
-                    anchorNode2?.worldPosition?.x ?: 0f,
-                    anchorNode2?.worldPosition?.y ?: 0f,
-                    anchorNode2?.worldPosition?.z ?: 0f
-                ),
-                Vector(
-                    anchorNode2?.worldPosition?.x ?: 0f,
-                    anchorNode2?.worldPosition?.y ?: 0f,
-                    anchorNode2?.worldPosition?.z ?: 0f
-                )
-            )
+            val vector1 = anchorNode1?.worldPosition?.let { Vector(it.x, it.y, it.z) } ?: return
+            val vector2 = anchorNode2?.worldPosition?.let { Vector(it.x, it.y, it.z) } ?: return
 
-            val currentAngle = calculateABAngle()
-            angleValue.postValue(currentAngle)
+            triangle = Triangle(vector1,vector2, vector2.copy())
+
+            angleValue.postValue(calculateABAngle())
         }
     }
-
 
     private fun createThreeDots(
         hitResult: HitResult,
@@ -230,14 +213,8 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     }
 
     fun showDistances() {
-        val distanceAB =
-            calculateVectorDistance(triangle.previousCameraVector, triangle.objectVector)
-        val distanceBC =
-            calculateVectorDistance(triangle.currentCameraVector, triangle.previousCameraVector)
-        val distanceAC =
-            calculateVectorDistance(triangle.currentCameraVector, triangle.objectVector)
-
-        this.distanceAB.postValue(distanceAB)
+        val distAB = calculateVectorDistance(triangle.previousCameraVector, triangle.objectVector)
+        distanceAB.postValue(distAB)
     }
 
     private fun calculateVectorDistance(vector1: Vector, vector2: Vector): Float {
@@ -247,10 +224,9 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
         return calculateDistance(x, y, z)
     }
 
-    private fun calculateDistance(x: Float, y: Float, z: Float): Float {
-        val sqrt = sqrt(x.pow(2) + y.pow(2) + z.pow(2))
-        return sqrt
-    }
+    private fun calculateDistance(x: Float, y: Float, z: Float): Float =
+        sqrt(x.pow(2) + y.pow(2) + z.pow(2))
+
 
     fun measureDistanceFromCamera(arFragment: MyArFragment) {
         val frame = arFragment.arSceneView?.arFrame

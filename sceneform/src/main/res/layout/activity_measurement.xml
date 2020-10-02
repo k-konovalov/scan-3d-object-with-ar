@@ -45,14 +45,14 @@
         android:textColor="@android:color/white"
         android:textSize="14sp" />
 
-    <ImageButton
+    <ImageView
         android:id="@+id/btnTakePhoto"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center"
         android:layout_margin="16dp"
+        android:tint="@android:color/white"
         android:background="?attr/selectableItemBackground"
-        android:backgroundTint="@android:color/transparent"
         android:src="@drawable/photo_camera" />
 
 </LinearLayout>
