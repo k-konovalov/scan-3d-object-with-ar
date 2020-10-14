@@ -103,6 +103,7 @@ class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
 
         arFragment.arSceneView?.scene?.addOnUpdateListener {
             viewModel.updateAngle(arFragment, arrowRedDownRenderable ?: return@addOnUpdateListener)
+            viewModel.measureAngleFromTheFloor(arFragment)
             viewModel.showDistances()
             viewModel.measureDistanceFromCamera(arFragment)
         }
@@ -125,6 +126,14 @@ class MeasurementActivity : AppCompatActivity(R.layout.activity_measurement) {
 
         viewModel.angleValue.observe(this, androidx.lifecycle.Observer { angle ->
             tvAngle?.text = "angle = $angle"
+        })
+
+        viewModel.currentDistanceFromTheFloor.observe(this, androidx.lifecycle.Observer { angle ->
+            tvDistanceFromTheFloor?.text = "current distance from the floor = ${("%.0f".format(angle))} cm"
+        })
+
+        viewModel.modelDistanceFromTheFloor.observe(this, androidx.lifecycle.Observer { angle ->
+            tvModelDistanceFromTheFloor?.text = "model distance from the floor = ${("%.0f".format(angle))} cm"
         })
 
         viewModel.distanceAB.observe(this, androidx.lifecycle.Observer { distanceAB ->
