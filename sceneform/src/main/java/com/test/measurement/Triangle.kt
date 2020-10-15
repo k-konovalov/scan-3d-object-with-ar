@@ -33,9 +33,9 @@ data class Triangle(
  */
 fun Triangle.calculateABAngle(): Int {
     // скалярное произведение координатным способом (перемножение координат двух веторов)
-    val scalarMultiplication = previousCameraVector.x * currentCameraVector.x + previousCameraVector.y * previousCameraVector.y + previousCameraVector.z * previousCameraVector.z
+    val scalarMultiplication = previousCameraVector.x * currentCameraVector.x + previousCameraVector.y * currentCameraVector.y + previousCameraVector.z * currentCameraVector.z
 
-    val currentVector = sqrt(currentCameraVector.x.pow(2) + previousCameraVector.y.pow(2) + previousCameraVector.z.pow(2))
+    val currentVector = sqrt(currentCameraVector.x.pow(2) + currentCameraVector.y.pow(2) + currentCameraVector.z.pow(2))
     val previousVector = sqrt(previousCameraVector.x.pow(2) +previousCameraVector.y.pow(2) + previousCameraVector.z.pow(2))
 
     val angleCos = scalarMultiplication / (previousVector * currentVector)
