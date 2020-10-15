@@ -126,8 +126,8 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
 
         val angle = triangle.calculateABAngle()
 
-        if (angle == 90 && (triangle.currentCameraVector.x >= triangle.previousCameraVector.x - 7 && triangle.currentCameraVector.x <= triangle.previousCameraVector.x + 7)
-            && (triangle.currentCameraVector.y >= triangle.previousCameraVector.y - 7 && triangle.currentCameraVector.y <= triangle.previousCameraVector.y + 7)) {
+        if (angle == 90 && (triangle.currentCameraVector.x >= triangle.previousCameraVector.x - 10 && triangle.currentCameraVector.x <= triangle.previousCameraVector.x + 10)
+            && (triangle.currentCameraVector.y >= triangle.previousCameraVector.y - 10 && triangle.currentCameraVector.y <= triangle.previousCameraVector.y + 10)) {
             anchorNode2?.let {
                 removeChild.value = it
             }
