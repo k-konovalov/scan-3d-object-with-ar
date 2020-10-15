@@ -20,6 +20,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.acos
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -34,8 +35,9 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     val distanceAB = MutableLiveData<Float>()
     val distanceAC = MutableLiveData<Float>()
 
-    val currentDistanceFromTheFloor = MutableLiveData<Float>()
-    val modelDistanceFromTheFloor = MutableLiveData<Float>()
+    val currentAngleFloor = MutableLiveData<Int>()
+    val modelAngleFloor = MutableLiveData<Int>()
+    var currentModelAngle = Angles.ZERO
 
     private var anchorNode1: AnchorNode? = null
     private var anchorNode2: AnchorNode? = null
@@ -126,8 +128,10 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
 
         val angle = triangle.calculateABAngle()
 
-        if (angle == 90 && (triangle.currentCameraVector.x >= triangle.previousCameraVector.x - 10 && triangle.currentCameraVector.x <= triangle.previousCameraVector.x + 10)
-            && (triangle.currentCameraVector.y >= triangle.previousCameraVector.y - 10 && triangle.currentCameraVector.y <= triangle.previousCameraVector.y + 10)) {
+        if (angle == 90 && currentAngleFloor.value == modelAngleFloor.value && (distanceAB.value!! >= distanceAC.value!! - 5 && distanceAB.value!! <= distanceAC.value!! + 5)) {
+
+            takePhoto(arFragment.arSceneView)
+
             anchorNode2?.let {
                 removeChild.value = it
             }
@@ -147,6 +151,12 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
                     z = anchorNode2?.worldPosition?.z ?: 0f
                 }
             }
+
+//            currentModelAngle = when (currentModelAngle) {
+//                Angles.ZERO -> Angles.FORTY_FIVE
+//                Angles.FORTY_FIVE -> Angles.EIGHTY_FIVE
+//                else -> Angles.ZERO
+//            }
         }
         angleValue.postValue(angle)
     }
@@ -163,7 +173,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
             val vector1 = anchorNode1?.worldPosition?.let { Vector(it.x, it.y, it.z) } ?: return
             val vector2 = Vector(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
 
-            triangle = Triangle(vector1,vector2, vector2.copy())
+            triangle = Triangle(vector1, vector2, vector2.copy())
 
             angleValue.postValue(triangle.calculateABAngle())
         }
@@ -191,13 +201,14 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
 
     }
 
-    fun measureAngleFromTheFloor(arFragment: MyArFragment) {
-        val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
-
-        val currentHeight = (cameraPose.ty() + 1.0f) * 100
-        val modelHeight = (triangle.previousCameraVector.y + 1.0f) * 100
-        currentDistanceFromTheFloor.postValue(currentHeight)
-        modelDistanceFromTheFloor.postValue(modelHeight)
+    fun measureAngleFromTheFloor() {
+        currentAngleFloor.postValue(measureAngleY())
+        val modelAngle: Int = when (currentModelAngle) {
+            Angles.ZERO -> 0
+            Angles.FORTY_FIVE -> 45
+            else -> 85
+        }
+        modelAngleFloor.postValue(modelAngle)
     }
 
     fun showDistances() {
@@ -232,6 +243,21 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
             objectPose0.y - objectPose1.ty(),
             objectPose0.z - objectPose1.tz()
         )
+    }
+
+    private fun measureAngleY(): Int {
+        return try {
+            val ac = triangle.currentCameraVector.y - triangle.objectVector.y
+            val gipotenuze =
+                calculateVectorDistance(triangle.currentCameraVector, triangle.objectVector)
+            val cosA = ac / gipotenuze
+            val angleA = acos(cosA) * 180 / Math.PI
+            val angleB = 90 - angleA
+            angleB.toInt()
+        } catch (e: Throwable) {
+            0
+        }
+
     }
 
 }
