@@ -11,13 +11,33 @@
         android:layout_height="match_parent" />
 
     <LinearLayout
+        android:id="@+id/llTargetPos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Position.LinearLayouts"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/txtTargetXZ"
+            android:text="1"
+            style="@style/Position.TextViews"
+             />
+
+        <TextView
+            android:id="@+id/txtTargetXY"
+            android:text="2"
+            style="@style/Position.TextViews"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#4D008577"
-        android:orientation="vertical"
 
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:context=".fragments.CollectFragment">
 
@@ -29,7 +49,7 @@
             android:layout_weight="0.5"
             android:gravity="center"
             android:padding="8dp"
-            android:textColor="@android:color/white"
+            android:textColor="#000000"
             android:textSize="14sp" />
 
         <TextView
@@ -40,7 +60,7 @@
             android:layout_weight="0.5"
             android:gravity="center"
             android:padding="8dp"
-            android:textColor="@android:color/white"
+            android:textColor="#000000"
             android:textSize="14sp" />
 
         <TextView
@@ -51,7 +71,7 @@
             android:layout_weight="0.5"
             android:gravity="center"
             android:padding="8dp"
-            android:textColor="@android:color/white"
+            android:textColor="#000000"
             android:textSize="14sp" />
 
         <TextView
@@ -62,7 +82,7 @@
             android:layout_weight="0.5"
             android:gravity="center"
             android:padding="8dp"
-            android:textColor="@android:color/white"
+            android:textColor="#000000"
             android:textSize="14sp" />
 
         <TextView
@@ -73,7 +93,7 @@
             android:layout_weight="0.5"
             android:gravity="center"
             android:padding="8dp"
-            android:textColor="@android:color/white"
+            android:textColor="#000000"
             android:textSize="14sp" />
 
         <ImageView
@@ -86,6 +106,26 @@
             android:src="@drawable/photo_camera"
             app:tint="@android:color/white" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llCurrentPos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="@style/Position.LinearLayouts"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/txtCurrentXZ"
+            android:text="1"
+            style="@style/Position.TextViews"/>
+
+        <TextView
+            android:id="@+id/txtCurrentXY"
+            android:text="2"
+            style="@style/Position.TextViews"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
