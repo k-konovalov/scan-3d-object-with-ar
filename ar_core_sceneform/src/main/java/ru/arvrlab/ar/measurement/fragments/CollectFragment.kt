@@ -68,8 +68,8 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
     }
 
     /**
-     * Реагирует только на первый таб (то есть можно поставить только одну точку)
-     * Устанавливает начальные значения треугольнику и отображает стрелку на месте таба
+     * Реагирует только на первый тап (то есть можно поставить только одну точку)
+     * Устанавливает начальные значения треугольнику и отображает стрелку на месте тапа
      */
     private fun initListeners() {
         arFragment.setOnTapArPlaneListener { hitResult: HitResult, _: Plane?, _: MotionEvent? ->
@@ -104,7 +104,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         })
 
         viewModel.currentAngleFloor.observe(viewLifecycleOwner, androidx.lifecycle.Observer { angle ->
-            tvCurrentAngleFloor?.text = "current angle from the floor = $angle"
+            tvCurrentAngleFloor?.text = "Camera cm from the floor = $angle cm"
         })
 
         viewModel.modelAngleFloor.observe(viewLifecycleOwner, androidx.lifecycle.Observer { angle ->

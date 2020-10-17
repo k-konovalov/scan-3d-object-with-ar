@@ -122,7 +122,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
      * Меняет начальную точки съемки и текущее положение камеры.
      * A также отображает значение угла
      */
-    fun updateAngle(arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment, arrowRedDownRenderable: Renderable) {
+    fun updateAngle(arFragment: MyArFragment, arrowRedDownRenderable: Renderable) {
 
         val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
         triangle.currentCameraVector.x = cameraPose.tx()
@@ -180,7 +180,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
                     it.z
                 )
             } ?: return
-            val vector2 = ru.arvrlab.ar.measurement.core.Vector(
+            val vector2 = Vector(
                 cameraPose.tx(),
                 cameraPose.ty(),
                 cameraPose.tz()
@@ -229,7 +229,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         distanceAB.postValue(distAB)
     }
 
-    private fun calculateVectorDistance(vector1: ru.arvrlab.ar.measurement.core.Vector, vector2: ru.arvrlab.ar.measurement.core.Vector): Float {
+    private fun calculateVectorDistance(vector1: Vector, vector2: Vector): Float {
         val x = vector1.x - vector2.x
         val y = vector1.y - vector2.y
         val z = vector1.z - vector2.z
@@ -240,7 +240,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         sqrt(x.pow(2) + y.pow(2) + z.pow(2))
 
 
-    fun measureDistanceFromCamera(arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment) {
+    fun measureDistanceFromCamera(arFragment: MyArFragment) {
         val frame = arFragment.arSceneView?.arFrame
         distanceAC.postValue(
             calculateDistance(
