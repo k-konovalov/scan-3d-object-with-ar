@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_nav"
+    app:startDestination="@id/startFragment">
+
+    <fragment
+        android:id="@+id/collectFragment"
+        android:name="ru.arvrlab.ar.measurement.fragments.CollectFragment"
+        android:label="collect_fragment"
+        tools:layout="@layout/collect_fragment" />
+    <fragment
+        android:id="@+id/startFragment"
+        android:name="ru.arvrlab.ar.measurement.fragments.StartFragment"
+        android:label="start_fragment"
+        tools:layout="@layout/start_fragment" >
+        <action
+            android:id="@+id/action_startFragment_to_collectFragment"
+            app:destination="@id/collectFragment" />
+    </fragment>
+</navigation>
