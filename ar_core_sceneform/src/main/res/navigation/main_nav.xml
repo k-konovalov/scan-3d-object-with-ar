@@ -6,10 +6,10 @@
     app:startDestination="@id/startFragment">
 
     <fragment
-        android:id="@+id/collectFragment"
-        android:name="ru.arvrlab.ar.measurement.fragments.CollectFragment"
+        android:id="@+id/measurementFragment"
+        android:name="ru.arvrlab.ar.measurement.fragments.MeasurementFragment"
         android:label="collect_fragment"
-        tools:layout="@layout/collect_fragment" />
+        tools:layout="@layout/measurement_fragment" />
     <fragment
         android:id="@+id/startFragment"
         android:name="ru.arvrlab.ar.measurement.fragments.StartFragment"
@@ -17,6 +17,14 @@
         tools:layout="@layout/start_fragment" >
         <action
             android:id="@+id/action_startFragment_to_collectFragment"
+            app:destination="@id/measurementFragment" />
+        <action
+            android:id="@+id/action_startFragment_to_collectFragment2"
             app:destination="@id/collectFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/collectFragment"
+        android:name="ru.arvrlab.ar.measurement.fragments.CollectFragment"
+        android:label="collect_fragment"
+        tools:layout="@layout/collect_fragment" />
 </navigation>

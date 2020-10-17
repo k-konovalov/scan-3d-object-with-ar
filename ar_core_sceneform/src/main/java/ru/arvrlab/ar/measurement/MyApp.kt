@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import com.google.android.filament.Filament
 import kotlin.system.exitProcess
 
 class MyApp: Application() {
@@ -16,7 +17,7 @@ class MyApp: Application() {
         if (!checkIsSupportedDeviceOrFinish(this)) {
             Toast.makeText(applicationContext, "Device not supported", Toast.LENGTH_LONG).show()
             exitProcess(0)
-        }
+        } else Filament.init()
     }
 
     private fun checkIsSupportedDeviceOrFinish(context: Context): Boolean {

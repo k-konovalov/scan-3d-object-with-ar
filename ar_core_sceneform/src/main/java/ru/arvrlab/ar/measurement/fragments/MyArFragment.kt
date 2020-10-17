@@ -1,4 +1,4 @@
-package com.test.measurement
+package ru.arvrlab.ar.measurement.fragments
 
 import android.Manifest
 import com.google.ar.sceneform.ux.ArFragment

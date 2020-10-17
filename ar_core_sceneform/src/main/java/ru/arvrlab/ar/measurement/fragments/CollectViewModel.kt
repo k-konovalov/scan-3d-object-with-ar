@@ -1,345 +1,256 @@
 package ru.arvrlab.ar.measurement.fragments
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.util.Log
-import android.widget.LinearLayout
-import android.widget.TextView
-import androidx.lifecycle.ViewModel
-import com.google.ar.core.Anchor
+import android.app.Application
+import android.graphics.Bitmap
+import android.os.Environment
+import android.os.Handler
+import android.os.HandlerThread
+import android.view.PixelCopy
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.MutableLiveData
 import com.google.ar.core.HitResult
 import com.google.ar.core.Pose
 import com.google.ar.sceneform.AnchorNode
-import com.google.ar.sceneform.Node
-import com.google.ar.sceneform.Scene
+import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.math.Vector3
-import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
-import com.google.ar.sceneform.rendering.ViewRenderable
-import com.google.ar.sceneform.ux.ArFragment
-import com.google.ar.sceneform.ux.TransformableNode
-import ru.arvrlab.ar.measurement.R
-import ru.arvrlab.ar.measurement.core.Constants
+import ru.arvrlab.ar.measurement.core.*
+import ru.arvrlab.ar.measurement.core.Vector
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.math.acos
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class CollectViewModel : ViewModel() {
-    private val TAG = "MeasurementViewModel"
-    lateinit var arFragment: ArFragment
+class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
 
-    lateinit var arrow1UpRenderable: Renderable
-    lateinit var arrow1DownRenderable: Renderable
-    lateinit var arrow10UpRenderable: Renderable
-    lateinit var arrow10DownRenderable: Renderable
-    lateinit var cubeRenderable: ModelRenderable
-    lateinit var distanceCardViewRenderable: ViewRenderable
+    val toastMessage = MutableLiveData<String>()
 
-    lateinit var onSceneUpdateListener: Scene.OnUpdateListener
+    val removeChild = MutableLiveData<AnchorNode>()
 
-    private val placedAnchors = ArrayList<Anchor>()
-    private val placedAnchorNodes = ArrayList<AnchorNode>()
-    private val midAnchors: MutableMap<String, Anchor> = mutableMapOf()
-    private val midAnchorNodes: MutableMap<String, AnchorNode> = mutableMapOf()
-    private val fromGroundNodes = ArrayList<List<Node>>()
+    val angleValue = MutableLiveData<Int>()
 
-    val multipleDistances = Array(Constants.maxNumMultiplePoints) { Array<TextView?>(Constants.maxNumMultiplePoints) { null } }
-    val initCM: String = "0.0"
+    val distanceAB = MutableLiveData<Float>()
+    val distanceAC = MutableLiveData<Float>()
 
-    fun clearAllAnchors(){
-        placedAnchors.clear()
-        for (anchorNode in placedAnchorNodes){
-            arFragment.arSceneView.scene.removeChild(anchorNode)
-            anchorNode.isEnabled = false
-            anchorNode.anchor?.detach()
-            anchorNode.setParent(null)
+    val currentAngleFloor = MutableLiveData<Int>()
+    val modelAngleFloor = MutableLiveData<Int>()
+    var currentModelAngle = Angles.ZERO
+
+    private var anchorNode1: AnchorNode? = null
+    private var anchorNode2: AnchorNode? = null
+
+    private var triangle: Triangle = Triangle()
+
+    private var tabClicked = false
+
+    /** Add the takePhoto method
+     * The method takePhoto() uses the PixelCopy API to capture a screenshot of the ArSceneView.
+     * It is asynchronous since it actually happens between frames. When the listener is called,
+     * the bitmap is saved to the disk, and then a snackbar is shown with an intent to open the image
+     * in the Pictures application.
+     */
+    fun takePhoto(view: ArSceneView) {
+        val filename = generateFilename()
+        val image = view.arFrame?.acquireCameraImage()
+
+        // Create a bitmap the size of the scene view.
+        val bitmap = Bitmap.createBitmap(
+            view.width, view.height,
+            Bitmap.Config.ARGB_8888
+        )
+
+        // Create a handler thread to offload the processing of the image.
+        val handlerThread = HandlerThread("PixelCopier")
+        handlerThread.start()
+        // Make the request to copy.
+        PixelCopy.request(view, bitmap, { copyResult ->
+            if (copyResult == PixelCopy.SUCCESS) {
+                saveBitmapToDisk(bitmap, filename)
+                toastMessage.postValue("Photo saved")
+            } else {
+                toastMessage.postValue("Failed to copyPixels: $copyResult")
+            }
+            handlerThread.quitSafely()
+        }, Handler(handlerThread.looper))
+    }
+
+    /** Add generateFilename method
+     * A unique file name is needed for each picture we take.
+     * The filename for the picture is generated using the standard pictures
+     * directory, and then an album name of Sceneform. Each image name is based
+     * on the time, so they won't overwrite each other. This path is also related
+     * to the paths.xml file we added previously.
+     */
+    private fun generateFilename(): String {
+        val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
+        return app.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            .toString() + File.separator + "Sceneform/" + date + "_screenshot.jpeg"
+    }
+
+    /** Add saveBitmapToDisk method
+     * saveBitmapToDisk() writes out the bitmap to the file.
+     */
+    private fun saveBitmapToDisk(bitmap: Bitmap, filename: String) {
+        val out = File(filename)
+
+        out.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
+            }
         }
-        placedAnchorNodes.clear()
-        midAnchors.clear()
-        for ((k,anchorNode) in midAnchorNodes){
-            arFragment.arSceneView.scene.removeChild(anchorNode)
-            anchorNode.isEnabled = false
-            anchorNode.anchor?.detach()
-            anchorNode.setParent(null)
-        }
-        midAnchorNodes.clear()
-        for (i in 0 until Constants.maxNumMultiplePoints){
-            for (j in 0 until Constants.maxNumMultiplePoints){
-                if (multipleDistances[i][j] != null){
-                    multipleDistances[i][j]?.text = if(i==j) "-" else initCM
+
+        try {
+            FileOutputStream(filename).use { outputStream ->
+                ByteArrayOutputStream().use { outputData ->
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData)
+                    outputData.writeTo(outputStream)
+                    outputStream.flush()
+                    outputStream.close()
                 }
             }
+        } catch (e: IOException) {
+            toastMessage.postValue(e.toString())
         }
-        fromGroundNodes.clear()
     }
 
-    fun tapDistanceFromGround(hitResult: HitResult){
-        clearAllAnchors()
-        val anchor = hitResult.createAnchor()
-        placedAnchors.add(anchor)
+    /**
+     * Меняет начальную точки съемки и текущее положение камеры.
+     * A также отображает значение угла
+     */
+    fun updateAngle(arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment, arrowRedDownRenderable: Renderable) {
 
-        val anchorNode = AnchorNode(anchor).apply {
-            isSmoothed = true
-            setParent(arFragment.arSceneView.scene)
-        }
-        placedAnchorNodes.add(anchorNode)
+        val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
+        triangle.currentCameraVector.x = cameraPose.tx()
+        triangle.currentCameraVector.y = cameraPose.ty()
+        triangle.currentCameraVector.z = cameraPose.tz()
 
-        val transformableNode = TransformableNode(arFragment.transformationSystem).apply{
-            rotationController.isEnabled = false
-            scaleController.isEnabled = false
-            translationController.isEnabled = true
-            renderable = renderable
-            setParent(anchorNode)
-        }
+        val angle = triangle.calculateABAngle()
 
-        val node = Node().apply {
-            setParent(transformableNode)
-            worldPosition = Vector3(
-                anchorNode.worldPosition.x,
-                anchorNode.worldPosition.y,
-                anchorNode.worldPosition.z)
-            renderable = distanceCardViewRenderable
-        }
+        if (angle == 90 && currentAngleFloor.value == modelAngleFloor.value && (distanceAB.value!! >= distanceAC.value!! - 5 && distanceAB.value!! <= distanceAC.value!! + 5)) {
 
-        val arrow1UpNode = Node().apply {
-            setParent(node)
-            worldPosition = Vector3(
-                node.worldPosition.x,
-                node.worldPosition.y+0.1f,
-                node.worldPosition.z
-            )
-            renderable = arrow1UpRenderable
-            setOnTapListener { hitTestResult, motionEvent ->
-                node.worldPosition = Vector3(
-                    node.worldPosition.x,
-                    node.worldPosition.y+0.01f,
-                    node.worldPosition.z
-                )
-            }
-        }
+            takePhoto(arFragment.arSceneView)
 
-        val arrow1DownNode = Node().apply {
-            setParent(node)
-            worldPosition = Vector3(
-                node.worldPosition.x,
-                node.worldPosition.y - 0.08f,
-                node.worldPosition.z
-            )
-            renderable = arrow1DownRenderable
-            setOnTapListener { hitTestResult, motionEvent ->
-                node.worldPosition = Vector3(
-                    node.worldPosition.x,
-                    node.worldPosition.y - 0.01f,
-                    node.worldPosition.z
-                )
-            }
-        }
-
-        val arrow10UpNode = Node().apply {
-            setParent(node)
-            worldPosition = Vector3(
-                node.worldPosition.x,
-                node.worldPosition.y + 0.18f,
-                node.worldPosition.z
-            )
-            renderable = arrow10UpRenderable
-            setOnTapListener { hitTestResult, motionEvent ->
-                node.worldPosition = Vector3(
-                    node.worldPosition.x,
-                    node.worldPosition.y + 0.1f,
-                    node.worldPosition.z
-                )
-            }
-        }
-
-        val arrow10DownNode = Node().apply {
-            setParent(node)
-            worldPosition = Vector3(
-                node.worldPosition.x,
-                node.worldPosition.y - 0.167f,
-                node.worldPosition.z
-            )
-            renderable = arrow10DownRenderable
-            setOnTapListener { hitTestResult, motionEvent ->
-                node.worldPosition = Vector3(
-                    node.worldPosition.x,
-                    node.worldPosition.y - 0.1f,
-                    node.worldPosition.z
-                )
-            }
-        }
-
-        fromGroundNodes.add(listOf(node, arrow1UpNode, arrow1DownNode, arrow10UpNode, arrow10DownNode))
-
-        arFragment.arSceneView.scene.run {
-            addOnUpdateListener(onSceneUpdateListener)
-            addChild(anchorNode)
-        }
-        transformableNode.select()
-    }
-
-    fun placeAnchor(hitResult: HitResult, renderable: Renderable){
-        val anchor = hitResult.createAnchor()
-        placedAnchors.add(anchor)
-
-        val anchorNode = AnchorNode(anchor).apply {
-            isSmoothed = true
-            setParent(arFragment.arSceneView.scene)
-        }
-        placedAnchorNodes.add(anchorNode)
-
-        val node = TransformableNode(arFragment.transformationSystem)
-            .apply{
-                rotationController.isEnabled = false
-                scaleController.isEnabled = false
-                translationController.isEnabled = true
-                this.renderable = renderable
-                setParent(anchorNode)
+            anchorNode2?.let {
+                removeChild.value = it
             }
 
-        arFragment.arSceneView.scene.run {
-            addOnUpdateListener(onSceneUpdateListener)
-            addChild(anchorNode)
-        }
-        node.select()
-    }
+            val anchor2 = arFragment.arSceneView.session?.createAnchor(cameraPose)
 
-    fun tapDistanceOf2Points(hitResult: HitResult){
-        when (placedAnchorNodes.size) {
-            0 -> placeAnchor(hitResult, cubeRenderable)
-            1 -> {
-                placeAnchor(hitResult, cubeRenderable)
-
-                val midPosition = floatArrayOf(
-                    (placedAnchorNodes[0].worldPosition.x + placedAnchorNodes[1].worldPosition.x) / 2,
-                    (placedAnchorNodes[0].worldPosition.y + placedAnchorNodes[1].worldPosition.y) / 2,
-                    (placedAnchorNodes[0].worldPosition.z + placedAnchorNodes[1].worldPosition.z) / 2
-                )
-                val quaternion = floatArrayOf(0.0f, 0.0f, 0.0f, 0.0f)
-                val pose = Pose(midPosition, quaternion)
-
-                placeMidAnchor(pose, distanceCardViewRenderable)
+            anchorNode2 = AnchorNode(anchor2).apply {
+                renderable = arrowRedDownRenderable
+                setParent(arFragment.arSceneView?.scene)
             }
-            else -> {
-                clearAllAnchors()
-                placeAnchor(hitResult, cubeRenderable)
-            }
-        }
-    }
 
-    private fun placeMidAnchor(pose: Pose, renderable: Renderable, between: Array<Int> = arrayOf(0,1)){
-        val midKey = "${between[0]}_${between[1]}"
-        val session = arFragment.arSceneView.session ?: return
-        val anchor = session.createAnchor(pose)
-        midAnchors[midKey] = anchor
+            anchorNode2?.worldPosition?.let { newCoords ->
 
-        val anchorNode = AnchorNode(anchor).apply {
-            isSmoothed = true
-            setParent(arFragment.arSceneView.scene)
-        }
-        midAnchorNodes[midKey] = anchorNode
-
-        val node = TransformableNode(arFragment.transformationSystem)
-            .apply{
-                rotationController.isEnabled = false
-                scaleController.isEnabled = false
-                translationController.isEnabled = true
-                this.renderable = renderable
-                setParent(anchorNode)
-            }
-        arFragment.arSceneView.scene.run {
-            addOnUpdateListener(onSceneUpdateListener)
-            addChild(anchorNode)
-        }
-    }
-
-    fun tapDistanceOfMultiplePoints(hitResult: HitResult, context: Context, showErrorAlert: (msg: Throwable) -> Unit){
-        if (placedAnchorNodes.size >= Constants.maxNumMultiplePoints){
-            clearAllAnchors()
-        }
-        ViewRenderable
-            .builder()
-            .setView(context, R.layout.point_text_layout)
-            .build()
-            .thenAccept{
-                it.isShadowReceiver = false
-                it.isShadowCaster = false
-                (it.view as TextView).text = placedAnchors.size.toString() // pointTextView
-                placeAnchor(hitResult, it)
-            }
-            .exceptionally {
-                showErrorAlert(it)
-                return@exceptionally null
-            }
-        Log.i(TAG, "Number of anchors: ${placedAnchorNodes.size}")
-    }
-
-    @SuppressLint("SetTextI18n")
-    fun measureDistanceFromGround(){
-        if (fromGroundNodes.size == 0) return
-        for (node in fromGroundNodes){
-            val textView = (distanceCardViewRenderable.view as LinearLayout)
-                .findViewById<TextView>(R.id.distanceCard)
-            val distanceCM = changeUnit(node[0].worldPosition.y + 1.0f, "cm")
-            textView.text = "%.0f".format(distanceCM) + " cm"
-        }
-    }
-
-    fun showCurrentCameraPosition(tvCameraX: TextView, tvCameraY: TextView, tvCameraZ: TextView) {
-        val frame = arFragment.arSceneView.arFrame ?: return
-
-        frame.camera.pose?.run {
-            tvCameraX.text = tx().toString()
-            tvCameraY.text = ty().toString()
-            tvCameraZ.text = tz().toString()
-        }
-    }
-
-    fun measureDistanceFromCamera() {
-        val frame = arFragment.arSceneView.arFrame ?: return
-        if (placedAnchorNodes.size >= 1) {
-            val distanceMeter = calculateDistance(placedAnchorNodes[0].worldPosition, frame.camera.pose)
-            measureDistanceOf2Points(distanceMeter)
-        }
-    }
-
-    fun measureDistanceOf2Points(){
-        if (placedAnchorNodes.size == 2) {
-            val distanceMeter = calculateDistance(placedAnchorNodes[0].worldPosition, placedAnchorNodes[1].worldPosition)
-            measureDistanceOf2Points(distanceMeter)
-        }
-    }
-
-    private fun measureDistanceOf2Points(distanceMeter: Float){
-        val distanceTextCM = makeDistanceTextWithCM(distanceMeter)
-        val textView = (distanceCardViewRenderable.view as LinearLayout)
-            .findViewById<TextView>(R.id.distanceCard)
-        textView.text = distanceTextCM
-        Log.d(TAG, "distance: ${distanceTextCM}")
-    }
-
-    fun measureMultipleDistances(){
-        if (placedAnchorNodes.size > 1){
-            for (i in 0 until placedAnchorNodes.size){
-                for (j in i+1 until placedAnchorNodes.size){
-                    val distanceMeter = calculateDistance(
-                        placedAnchorNodes[i].worldPosition,
-                        placedAnchorNodes[j].worldPosition)
-                    val distanceCM = changeUnit(distanceMeter, "cm")
-                    val distanceCMFloor = "%.2f".format(distanceCM)
-                    multipleDistances[i][j]?.text = distanceCMFloor
-                    multipleDistances[j][i]?.text = distanceCMFloor
+                triangle.previousCameraVector.apply {
+                    x = anchorNode2?.worldPosition?.x ?: 0f
+                    y = anchorNode2?.worldPosition?.y ?: 0f
+                    z = anchorNode2?.worldPosition?.z ?: 0f
                 }
             }
+
+//            currentModelAngle = when (currentModelAngle) {
+//                Angles.ZERO -> Angles.FORTY_FIVE
+//                Angles.FORTY_FIVE -> Angles.EIGHTY_FIVE
+//                else -> Angles.ZERO
+//            }
+        }
+        angleValue.postValue(angle)
+    }
+
+    fun onTap(hitResult: HitResult, arrowRedDownRenderable: Renderable, arFragment: MyArFragment) {
+        if (!tabClicked) {
+
+            val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
+
+            tabClicked = true
+
+            createThreeDots(hitResult, arrowRedDownRenderable, arFragment)
+
+            val vector1 = anchorNode1?.worldPosition?.let {
+                Vector(
+                    it.x,
+                    it.y,
+                    it.z
+                )
+            } ?: return
+            val vector2 = ru.arvrlab.ar.measurement.core.Vector(
+                cameraPose.tx(),
+                cameraPose.ty(),
+                cameraPose.tz()
+            )
+
+            triangle = Triangle(vector1, vector2, vector2.copy())
+
+            angleValue.postValue(triangle.calculateABAngle())
         }
     }
 
-    private fun makeDistanceTextWithCM(distanceMeter: Float): String{
-        val distanceCMFloor = changeUnit(distanceMeter, "cm")
-        //val distanceCMFloor = "%.2f".format(distanceCM)
-        return "$distanceCMFloor cm"
+    private fun createThreeDots(
+        hitResult: HitResult,
+        arrowRedDownRenderable: Renderable,
+        arFragment: MyArFragment
+    ) {
+        val anchor = hitResult.createAnchor()
+
+        anchorNode1 = AnchorNode(anchor).apply {
+            renderable = arrowRedDownRenderable
+            setParent(arFragment.arSceneView?.scene)
+        }
+
+        val pose = arFragment.arSceneView.arFrame?.camera?.pose
+        val anchor2 = arFragment.arSceneView.session?.createAnchor(pose)
+
+        anchorNode2 = AnchorNode(anchor2).apply {
+            renderable = arrowRedDownRenderable
+            setParent(arFragment.arSceneView?.scene)
+        }
+
     }
 
-    private fun calculateDistance(objectPose0: Vector3, objectPose1: Pose): Float{
+    fun measureAngleFromTheFloor() {
+        currentAngleFloor.postValue(measureAngleY())
+        val modelAngle: Int = when (currentModelAngle) {
+            Angles.ZERO -> 0
+            ru.arvrlab.ar.measurement.core.Angles.FORTY_FIVE -> 45
+            else -> 85
+        }
+        modelAngleFloor.postValue(modelAngle)
+    }
+
+    fun showDistances() {
+        val distAB = calculateVectorDistance(triangle.previousCameraVector, triangle.objectVector)
+        distanceAB.postValue(distAB)
+    }
+
+    private fun calculateVectorDistance(vector1: ru.arvrlab.ar.measurement.core.Vector, vector2: ru.arvrlab.ar.measurement.core.Vector): Float {
+        val x = vector1.x - vector2.x
+        val y = vector1.y - vector2.y
+        val z = vector1.z - vector2.z
+        return calculateDistance(x, y, z)
+    }
+
+    private fun calculateDistance(x: Float, y: Float, z: Float): Float =
+        sqrt(x.pow(2) + y.pow(2) + z.pow(2))
+
+
+    fun measureDistanceFromCamera(arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment) {
+        val frame = arFragment.arSceneView?.arFrame
+        distanceAC.postValue(
+            calculateDistance(
+                anchorNode1?.worldPosition ?: return,
+                frame?.camera?.pose ?: return
+            )
+        )
+    }
+
+    private fun calculateDistance(objectPose0: Vector3, objectPose1: Pose): Float {
         return calculateDistance(
             objectPose0.x - objectPose1.tx(),
             objectPose0.y - objectPose1.ty(),
@@ -347,27 +258,19 @@ class CollectViewModel : ViewModel() {
         )
     }
 
-    private fun calculateDistance(objectPose0: Vector3, objectPose1: Vector3): Float{
-        return calculateDistance(
-            objectPose0.x - objectPose1.x,
-            objectPose0.y - objectPose1.y,
-            objectPose0.z - objectPose1.z
-        )
+    private fun measureAngleY(): Int {
+        return try {
+            val ac = triangle.currentCameraVector.y - triangle.objectVector.y
+            val gipotenuze =
+                calculateVectorDistance(triangle.currentCameraVector, triangle.objectVector)
+            val cosA = ac / gipotenuze
+            val angleA = acos(cosA) * 180 / Math.PI
+            val angleB = 90 - angleA
+            angleB.toInt()
+        } catch (e: Throwable) {
+            0
+        }
+
     }
 
-    //Euclidean measure
-    private fun calculateDistance(x: Float, y: Float, z: Float) = sqrt(x.pow(2) + y.pow(2) + z.pow(2))
-
-    private fun calculateDistance(objectPose0: Pose, objectPose1: Pose): Float{
-        return calculateDistance(
-            objectPose0.tx() - objectPose1.tx(),
-            objectPose0.ty() - objectPose1.ty(),
-            objectPose0.tz() - objectPose1.tz())
-    }
-
-    private fun changeUnit(distanceMeter: Float, unit: String) = when(unit){
-        "cm" -> distanceMeter * 100
-        "mm" -> distanceMeter * 1000
-        else -> distanceMeter
-    }
 }

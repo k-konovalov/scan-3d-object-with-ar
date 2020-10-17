@@ -37,12 +37,13 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
 
     val currentAngleFloor = MutableLiveData<Int>()
     val modelAngleFloor = MutableLiveData<Int>()
-    var currentModelAngle = Angles.ZERO
+    var currentModelAngle = ru.arvrlab.ar.measurement.core.Angles.ZERO
 
     private var anchorNode1: AnchorNode? = null
     private var anchorNode2: AnchorNode? = null
 
-    private var triangle: Triangle = Triangle()
+    private var triangle: ru.arvrlab.ar.measurement.core.Triangle =
+        ru.arvrlab.ar.measurement.core.Triangle()
 
     private var tabClicked = false
 
@@ -119,7 +120,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
      * Меняет начальную точки съемки и текущее положение камеры.
      * A также отображает значение угла
      */
-    fun updateAngle(arFragment: MyArFragment, arrowRedDownRenderable: Renderable) {
+    fun updateAngle(arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment, arrowRedDownRenderable: Renderable) {
 
         val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
         triangle.currentCameraVector.x = cameraPose.tx()
@@ -161,7 +162,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
         angleValue.postValue(angle)
     }
 
-    fun onTap(hitResult: HitResult, arrowRedDownRenderable: Renderable, arFragment: MyArFragment) {
+    fun onTap(hitResult: HitResult, arrowRedDownRenderable: Renderable, arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment) {
         if (!tabClicked) {
 
             val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
@@ -170,10 +171,20 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
 
             createThreeDots(hitResult, arrowRedDownRenderable, arFragment)
 
-            val vector1 = anchorNode1?.worldPosition?.let { Vector(it.x, it.y, it.z) } ?: return
-            val vector2 = Vector(cameraPose.tx(), cameraPose.ty(), cameraPose.tz())
+            val vector1 = anchorNode1?.worldPosition?.let {
+                ru.arvrlab.ar.measurement.core.Vector(
+                    it.x,
+                    it.y,
+                    it.z
+                )
+            } ?: return
+            val vector2 = ru.arvrlab.ar.measurement.core.Vector(
+                cameraPose.tx(),
+                cameraPose.ty(),
+                cameraPose.tz()
+            )
 
-            triangle = Triangle(vector1, vector2, vector2.copy())
+            triangle = ru.arvrlab.ar.measurement.core.Triangle(vector1, vector2, vector2.copy())
 
             angleValue.postValue(triangle.calculateABAngle())
         }
@@ -182,7 +193,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     private fun createThreeDots(
         hitResult: HitResult,
         arrowRedDownRenderable: Renderable,
-        arFragment: MyArFragment
+        arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment
     ) {
         val anchor = hitResult.createAnchor()
 
@@ -204,8 +215,8 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
     fun measureAngleFromTheFloor() {
         currentAngleFloor.postValue(measureAngleY())
         val modelAngle: Int = when (currentModelAngle) {
-            Angles.ZERO -> 0
-            Angles.FORTY_FIVE -> 45
+            ru.arvrlab.ar.measurement.core.Angles.ZERO -> 0
+            ru.arvrlab.ar.measurement.core.Angles.FORTY_FIVE -> 45
             else -> 85
         }
         modelAngleFloor.postValue(modelAngle)
@@ -216,7 +227,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
         distanceAB.postValue(distAB)
     }
 
-    private fun calculateVectorDistance(vector1: Vector, vector2: Vector): Float {
+    private fun calculateVectorDistance(vector1: ru.arvrlab.ar.measurement.core.Vector, vector2: ru.arvrlab.ar.measurement.core.Vector): Float {
         val x = vector1.x - vector2.x
         val y = vector1.y - vector2.y
         val z = vector1.z - vector2.z
@@ -227,7 +238,7 @@ class MeasurementViewModel(private val app: Application) : AndroidViewModel(app)
         sqrt(x.pow(2) + y.pow(2) + z.pow(2))
 
 
-    fun measureDistanceFromCamera(arFragment: MyArFragment) {
+    fun measureDistanceFromCamera(arFragment: ru.arvrlab.ar.measurement.fragments.MyArFragment) {
         val frame = arFragment.arSceneView?.arFrame
         distanceAC.postValue(
             calculateDistance(

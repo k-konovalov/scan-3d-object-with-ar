@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/fragmentSceneform"
-        android:name="com.test.measurement.MyArFragment"
+        android:name="ru.arvrlab.ar.measurement.fragments.MyArFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="9" />
