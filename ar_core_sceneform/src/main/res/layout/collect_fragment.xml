@@ -2,7 +2,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
 
     <fragment
         android:id="@+id/fragmentSceneform"
@@ -10,122 +11,237 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
-        android:id="@+id/llTargetPos"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/Position.LinearLayouts"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/txtTargetXZ"
-            android:text="1"
-            style="@style/Position.TextViews"
-             />
-
-        <TextView
-            android:id="@+id/txtTargetXY"
-            android:text="2"
-            style="@style/Position.TextViews"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/linearLayout"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:visibility="invisible">
 
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:context=".fragments.CollectFragment">
-
-        <TextView
-            android:id="@+id/tvAngle"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="bottom"
-            android:layout_weight="0.5"
-            android:gravity="center"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tvDistanceAB"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="bottom"
-            android:layout_weight="0.5"
-            android:gravity="center"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tvDistanceAC"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="bottom"
-            android:layout_weight="0.5"
-            android:gravity="center"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tvCurrentAngleFloor"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="bottom"
-            android:layout_weight="0.5"
-            android:gravity="center"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/tvModelAngleFloor"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_gravity="bottom"
-            android:layout_weight="0.5"
-            android:gravity="center"
-            android:padding="8dp"
-            android:textColor="#000000"
-            android:textSize="14sp" />
-
-        <ImageView
-            android:id="@+id/btnTakePhoto"
+        <LinearLayout
+            android:id="@+id/llCamPos"
+            style="@style/Position.LinearLayouts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:layout_margin="16dp"
-            android:background="?attr/selectableItemBackground"
-            android:src="@drawable/photo_camera"
-            app:tint="@android:color/white" />
+            android:orientation="horizontal"
+            android:visibility="invisible"
+            tools:layout_editor_absoluteY="82dp">
 
+            <TextView
+                android:id="@+id/txtCamX"
+                style="@style/Position.TextViews"
+                android:layout_weight="1"
+                android:text="0" />
+
+            <TextView
+                android:id="@+id/txtCamY"
+                style="@style/Position.TextViews"
+                android:layout_weight="1"
+                android:text="0" />
+
+            <TextView
+                android:id="@+id/txtCamZ"
+                style="@style/Position.TextViews"
+                android:layout_weight="1"
+                android:text="0" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llOrbitNodePos"
+            style="@style/Position.LinearLayouts"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:visibility="invisible"
+            tools:layout_editor_absoluteX="246dp"
+            tools:layout_editor_absoluteY="82dp">
+
+            <TextView
+                android:id="@+id/txtOrbitNodeX"
+                style="@style/Position.TextViews"
+                android:layout_weight="1"
+                android:text="0" />
+
+            <TextView
+                android:id="@+id/txtOrbitNodeY"
+                style="@style/Position.TextViews"
+                android:layout_weight="1"
+                android:text="0" />
+
+            <TextView
+                android:id="@+id/txtOrbitNodeZ"
+                style="@style/Position.TextViews"
+                android:layout_weight="1"
+                android:text="0" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llCurrentPos"
+            style="@style/Position.LinearLayouts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            tools:layout_editor_absoluteX="148dp">
+
+            <TextView
+                android:id="@+id/txtCurrentXZ"
+                style="@style/Position.TextViews"
+                android:text="1" />
+
+            <TextView
+                android:id="@+id/txtCurrentXY"
+                style="@style/Position.TextViews"
+                android:text="2" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llTargetPos"
+            style="@style/Position.LinearLayouts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="invisible"
+            tools:layout_editor_absoluteX="148dp"
+            tools:layout_editor_absoluteY="8dp">
+
+            <TextView
+                android:id="@+id/txtTargetXZ"
+                style="@style/Position.TextViews"
+                android:text="1" />
+
+            <TextView
+                android:id="@+id/txtTargetXY"
+                style="@style/Position.TextViews"
+                android:text="2" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/llDebugInfo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/llAngleInfo"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvLabel2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Camera-obj (cm)"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/tvCamObjGipotenuza"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="8dp"
+                android:textColor="#000000"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:gravity="center"
+            android:orientation="horizontal"
+            tools:context=".fragments.CollectFragment">
+
+            <TextView
+                android:id="@+id/tvLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Camera-plane (cm)"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/tvCamObjKatet1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="8dp"
+                android:textColor="#000000"
+                android:textSize="14sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayout3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvLabel3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="obj-plane (cm)"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/tvCamObjKatet2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="8dp"
+                android:textColor="#000000"
+                android:textSize="14sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/llCurrentPos"
-        android:layout_width="wrap_content"
+        android:id="@+id/llAngleInfo"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        style="@style/Position.LinearLayouts"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/llDebugInfo">
 
-        <TextView
-            android:id="@+id/txtCurrentXZ"
-            android:text="1"
-            style="@style/Position.TextViews"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/txtCurrentXY"
-            android:text="2"
-            style="@style/Position.TextViews"/>
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cam-obj \n vert angle (degrees)"
+                android:textColor="#000000" />
+
+            <TextView
+                android:id="@+id/tvCameraObjVertAngle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="TextView"
+                android:textColor="#000000" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

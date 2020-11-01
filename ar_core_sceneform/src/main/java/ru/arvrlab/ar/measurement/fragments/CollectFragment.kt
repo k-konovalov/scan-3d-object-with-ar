@@ -8,6 +8,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
 import com.google.ar.sceneform.rendering.Renderable
@@ -31,6 +32,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         initListeners()
         initOnClickListeners()
         initObservers()
+        viewModel.initRenderable(requireContext())
     }
 
     /**
@@ -78,19 +80,20 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
 
         arFragment.arSceneView?.scene?.addOnUpdateListener {
             viewModel.updateAngle(arFragment, arrowRedDownRenderable ?: return@addOnUpdateListener)
-            viewModel.measureAngleFromTheFloor()
             viewModel.showDistances()
-            viewModel.measureDistanceFromCamera(arFragment)
         }
     }
 
     private fun initOnClickListeners() {
-        btnTakePhoto.setOnClickListener {
+        /*btnTakePhoto.setOnClickListener {
             viewModel.takePhoto(arFragment.arSceneView)
-        }
+        }*/
     }
 
     private fun initObservers() {
+        val textObserver = Observer<Float>{
+            //Todo: To better way
+        }
         viewModel.toastMessage.observe(viewLifecycleOwner, androidx.lifecycle.Observer { toastMessage ->
             Toast.makeText(requireContext(), toastMessage, Toast.LENGTH_LONG).show()
         })
@@ -99,24 +102,27 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
             arFragment.arSceneView.scene.removeChild(anchorNode)
         })
 
-        viewModel.angleValue.observe(viewLifecycleOwner, androidx.lifecycle.Observer { angle ->
-            tvAngle?.text = "angle = $angle"
+        viewModel.triangleCamObj.observe(viewLifecycleOwner, Observer {
+            tvCamObjGipotenuza?.text = "${it.x.toInt()}"
+            tvCamObjKatet1?.text = "${it.y.toInt()}"
+            tvCamObjKatet2?.text = "${it.z.toInt()}"
         })
 
-        viewModel.currentAngleFloor.observe(viewLifecycleOwner, androidx.lifecycle.Observer { angle ->
-            tvCurrentAngleFloor?.text = "Camera cm from the floor = $angle cm"
+        viewModel.angleCamObjVert.observe(viewLifecycleOwner, Observer {
+            tvCameraObjVertAngle.text = it.toString()
         })
 
-        viewModel.modelAngleFloor.observe(viewLifecycleOwner, androidx.lifecycle.Observer { angle ->
-            tvModelAngleFloor?.text = "model angle from the floor = $angle"
+        viewModel.currentCameraPos.observe(viewLifecycleOwner, Observer {
+            txtCamX.text = it.x.toString()
+            txtCamY.text = it.y.toString()
+            txtCamZ.text = it.z.toString()
         })
 
-        viewModel.distanceAB.observe(viewLifecycleOwner, androidx.lifecycle.Observer { distanceAB ->
-            tvDistanceAB.text = (distanceAB * 100).toInt().toString()
+        viewModel.currentOrbitNodePos.observe(viewLifecycleOwner, Observer {
+            txtOrbitNodeX.text = it.x.toString()
+            txtOrbitNodeY.text = it.y.toString()
+            txtOrbitNodeZ.text = it.z.toString()
         })
 
-        viewModel.distanceAC.observe(viewLifecycleOwner, androidx.lifecycle.Observer { distanceAC ->
-            tvDistanceAC.text = "From obj to camera: ${(distanceAC * 100).toInt()}cm"
-        })
     }
 }

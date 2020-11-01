@@ -1,19 +1,30 @@
 package ru.arvrlab.ar.measurement.fragments
 
 import android.app.Application
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import android.view.PixelCopy
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import com.google.ar.core.Anchor
 import com.google.ar.core.HitResult
 import com.google.ar.core.Pose
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
+import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.math.Vector3
+import com.google.ar.sceneform.rendering.Material
+import com.google.ar.sceneform.rendering.MaterialFactory
 import com.google.ar.sceneform.rendering.Renderable
+import com.google.ar.sceneform.rendering.ShapeFactory
+import com.google.ar.sceneform.ux.TransformableNode
+import com.google.mlkit.vision.common.InputImage
+import kotlinx.coroutines.*
 import ru.arvrlab.ar.measurement.core.*
 import ru.arvrlab.ar.measurement.core.Vector
 import java.io.ByteArrayOutputStream
@@ -22,11 +33,10 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.acos
-import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlin.math.*
 
 class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
+    val TAG = "CollectViewModel"
 
     val toastMessage = MutableLiveData<String>()
 
@@ -35,18 +45,27 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     val angleValue = MutableLiveData<Int>()
 
     val distanceAB = MutableLiveData<Float>()
-    val distanceAC = MutableLiveData<Float>()
-
-    val currentAngleFloor = MutableLiveData<Int>()
+    val distanceCameraToObj = MutableLiveData<Float>()
+    val distanceCameraToFloor = MutableLiveData<Int>()
     val modelAngleFloor = MutableLiveData<Int>()
     var currentModelAngle = Angles.ZERO
 
-    private var anchorNode1: AnchorNode? = null
+    val triangleCamObj = MutableLiveData<Vector3>()
+    val angleCamObjVert = MutableLiveData<Int>()
+
+    val currentCameraPos = MutableLiveData<Vector>()
+    val currentOrbitNodePos = MutableLiveData<Vector>()
+
+    private var orbitNode: AnchorNode? = null
     private var anchorNode2: AnchorNode? = null
+    private var anchorNode3: TransformableNode? = null
 
     private var triangle: Triangle = Triangle()
 
     private var tabClicked = false
+
+    private var redSphere: Renderable? = null
+    private var blueSphere: Renderable? = null
 
     /** Add the takePhoto method
      * The method takePhoto() uses the PixelCopy API to capture a screenshot of the ArSceneView.
@@ -54,6 +73,36 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
      * the bitmap is saved to the disk, and then a snackbar is shown with an intent to open the image
      * in the Pictures application.
      */
+    fun initRenderable(context: Context) {
+        MaterialFactory.makeTransparentWithColor(context, com.google.ar.sceneform.rendering.Color(Color.RED))
+            .thenAccept { material: Material? ->
+                redSphere = ShapeFactory.makeSphere(0.02f, Vector3.zero(), material) //Vector3.zero() - create x,y,z zero vector
+                redSphere?.isShadowCaster = false
+                redSphere?.isShadowReceiver = false
+
+            }
+            .exceptionally {
+                Log.e(TAG, "Init Renderable Error", it)
+                return@exceptionally null
+            }
+
+        MaterialFactory.makeTransparentWithColor(context, com.google.ar.sceneform.rendering.Color(Color.BLUE))
+            .thenAccept { material: Material? ->
+                blueSphere = ShapeFactory.makeSphere(
+                    0.02f,
+                    Vector3.zero(),
+                    material
+                ) //Vector3.zero() - create x,y,z zero vector
+                redSphere?.isShadowCaster = false
+                redSphere?.isShadowReceiver = false
+
+            }
+            .exceptionally {
+                Log.e(TAG, "Init Renderable Error", it)
+                return@exceptionally null
+            }
+    }
+
     fun takePhoto(view: ArSceneView) {
         val filename = generateFilename()
         val image = view.arFrame?.acquireCameraImage()
@@ -125,13 +174,18 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     fun updateAngle(arFragment: MyArFragment, arrowRedDownRenderable: Renderable) {
 
         val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
+        currentCameraPos.postValue(Vector(cameraPose.tx(), cameraPose.ty(), cameraPose.tz()))
         triangle.currentCameraVector.x = cameraPose.tx()
         triangle.currentCameraVector.y = cameraPose.ty()
         triangle.currentCameraVector.z = cameraPose.tz()
+        measureVertAngleCamToObj(cameraPose)
 
+        return //npe
         val angle = triangle.calculateABAngle()
+        angleValue.postValue(angle)
 
-        if (angle == 90 && currentAngleFloor.value == modelAngleFloor.value && (distanceAB.value!! >= distanceAC.value!! - 5 && distanceAB.value!! <= distanceAC.value!! + 5)) {
+
+        if (angle in 85..90 && distanceCameraToFloor.value == modelAngleFloor.value && (distanceAB.value!! >= distanceCameraToObj.value!! - 5 && distanceAB.value!! <= distanceCameraToObj.value!! + 5)) {
 
             takePhoto(arFragment.arSceneView)
 
@@ -161,34 +215,41 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
 //                else -> Angles.ZERO
 //            }
         }
-        angleValue.postValue(angle)
+
     }
+
+    private fun measureVertAngleCamToObj(cameraPose: Pose) {
+        val ab = measureDistanceFromOrbitNodeToCamera(cameraPose) * 100
+        val bc = measureDistanceFromCameraToFloor(cameraPose) * 100
+        val ac = measureDistanceFromOrbitNodeToFloor(cameraPose) * 100
+
+        val angle = (acos(cos(ac / ab)) * 180) / PI
+        val triangle = Vector3(ab, bc, ac)
+        // * 100).toFloat()
+        triangleCamObj.postValue(triangle)
+        angleCamObjVert.postValue(angle.toInt())
+
+    }
+
+    private fun measureDistanceFromOrbitNodeToCamera(cameraPose: Pose) = calculateDistance(orbitNode?.worldPosition ?: Vector3(), cameraPose)
+
+    // distCamToFloor - katet1
+    private fun measureDistanceFromCameraToFloor(cameraPose: Pose): Float
+        = orbitNode?.worldPosition?.y?.let { (it - cameraPose.ty()).pow(2) } ?: 0f
+
+    private fun measureDistanceFromOrbitNodeToFloor(cameraPose: Pose): Float{
+        val orbitPos = orbitNode?.worldPosition?.let { Vector(it.x, it.y, it.z) } ?: return 0f
+        val floor = Vector(cameraPose.tx(),orbitPos.y, cameraPose.tz())
+        return calculateDistance(orbitPos,floor)
+    }
+
+
 
     fun onTap(hitResult: HitResult, arrowRedDownRenderable: Renderable, arFragment: MyArFragment) {
         if (!tabClicked) {
-
-            val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
-
             tabClicked = true
 
             createThreeDots(hitResult, arrowRedDownRenderable, arFragment)
-
-            val vector1 = anchorNode1?.worldPosition?.let {
-                Vector(
-                    it.x,
-                    it.y,
-                    it.z
-                )
-            } ?: return
-            val vector2 = Vector(
-                cameraPose.tx(),
-                cameraPose.ty(),
-                cameraPose.tz()
-            )
-
-            triangle = Triangle(vector1, vector2, vector2.copy())
-
-            angleValue.postValue(triangle.calculateABAngle())
         }
     }
 
@@ -197,80 +258,64 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         arrowRedDownRenderable: Renderable,
         arFragment: MyArFragment
     ) {
-        val anchor = hitResult.createAnchor()
+        val orbitAnchor = hitResult.createAnchor()
 
-        anchorNode1 = AnchorNode(anchor).apply {
-            renderable = arrowRedDownRenderable
+        var orbitVector: Vector3
+
+        orbitNode = AnchorNode(orbitAnchor).apply {
+            renderable = redSphere
+            orbitVector = localPosition
             setParent(arFragment.arSceneView?.scene)
         }
 
-        val pose = arFragment.arSceneView.arFrame?.camera?.pose
-        val anchor2 = arFragment.arSceneView.session?.createAnchor(pose)
+        val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
 
-        anchorNode2 = AnchorNode(anchor2).apply {
+        anchorNode2 = AnchorNode(cameraAnchor).apply {
             renderable = arrowRedDownRenderable
             setParent(arFragment.arSceneView?.scene)
         }
+        /*
+        arFragment.arSceneView.
+            val img = arFragment.arSceneView.arFrame?.acquireCameraImage()
+            val image = InputImage.fromMediaImage(img!!, 90)
+            image.bitmapInternal
+        */
+        //provideShift()
 
     }
 
-    fun measureAngleFromTheFloor() {
-        currentAngleFloor.postValue(measureAngleY())
-        val modelAngle: Int = when (currentModelAngle) {
-            Angles.ZERO -> 0
-            ru.arvrlab.ar.measurement.core.Angles.FORTY_FIVE -> 45
-            else -> 85
+fun provideShift(){
+    CoroutineScope(Dispatchers.Unconfined).launch {
+        var shift = 0f
+        while (isActive){
+            delay(300)
+            shift += 0.01f
+            anchorNode3?.localPosition =  anchorNode3?.localPosition?.let {
+                Vector3(it.x, it.y + shift, it.z)
+            }
+            if (shift == 3f) shift = 0f
         }
-        modelAngleFloor.postValue(modelAngle)
     }
+}
 
     fun showDistances() {
-        val distAB = calculateVectorDistance(triangle.previousCameraVector, triangle.objectVector)
+        val distAB = calculateDistance(triangle.previousCameraVector, triangle.objectVector)
         distanceAB.postValue(distAB)
     }
 
-    private fun calculateVectorDistance(vector1: Vector, vector2: Vector): Float {
-        val x = vector1.x - vector2.x
-        val y = vector1.y - vector2.y
-        val z = vector1.z - vector2.z
-        return calculateDistance(x, y, z)
-    }
-
-    private fun calculateDistance(x: Float, y: Float, z: Float): Float =
-        sqrt(x.pow(2) + y.pow(2) + z.pow(2))
-
-
-    fun measureDistanceFromCamera(arFragment: MyArFragment) {
-        val frame = arFragment.arSceneView?.arFrame
-        distanceAC.postValue(
-            calculateDistance(
-                anchorNode1?.worldPosition ?: return,
-                frame?.camera?.pose ?: return
-            )
+    private fun calculateDistance(vector1: Vector, vector2: Vector): Float =
+        calculateDistance(
+            x = vector1.x - vector2.x,
+            y = vector1.y - vector2.y,
+            z = vector1.z - vector2.z
         )
-    }
 
-    private fun calculateDistance(objectPose0: Vector3, objectPose1: Pose): Float {
-        return calculateDistance(
-            objectPose0.x - objectPose1.tx(),
-            objectPose0.y - objectPose1.ty(),
-            objectPose0.z - objectPose1.tz()
-        )
-    }
+    private fun calculateDistance(objectPose0: Vector3, objectPose1: Pose) = calculateDistance(
+        x = objectPose0.x - objectPose1.tx(),
+        y = objectPose0.y - objectPose1.ty(),
+        z = objectPose0.z - objectPose1.tz()
+    )
 
-    private fun measureAngleY(): Int {
-        return try {
-            val ac = triangle.currentCameraVector.y - triangle.objectVector.y
-            val gipotenuze =
-                calculateVectorDistance(triangle.currentCameraVector, triangle.objectVector)
-            val cosA = ac / gipotenuze
-            val angleA = acos(cosA) * 180 / Math.PI
-            val angleB = 90 - angleA
-            angleB.toInt()
-        } catch (e: Throwable) {
-            0
-        }
-
-    }
-
+    //Euclidean measure
+    private fun calculateDistance(x: Float, y: Float, z: Float) = sqrt(x.pow(2) + y.pow(2) + z.pow(2))
 }

@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 /.idea/
+/sceneformux/ux/build/
+/sceneformsrc/sceneform/build/

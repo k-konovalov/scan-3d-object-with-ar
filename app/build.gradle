@@ -65,5 +65,7 @@ dependencies {
     implementation "net.gotev:uploadservice-ftp:$uploadServiceVersion"
 
 
+
+
     implementation 'androidx.preference:preference:1.1.1'
 }
