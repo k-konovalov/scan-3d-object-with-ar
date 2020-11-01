@@ -1,5 +1,6 @@
 package ru.arvrlab.ar.measurement.fragments
 
+import android.app.AlertDialog
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
@@ -18,13 +19,11 @@ import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.math.Vector3
-import com.google.ar.sceneform.rendering.Material
-import com.google.ar.sceneform.rendering.MaterialFactory
-import com.google.ar.sceneform.rendering.Renderable
-import com.google.ar.sceneform.rendering.ShapeFactory
+import com.google.ar.sceneform.rendering.*
 import com.google.ar.sceneform.ux.TransformableNode
 import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.*
+import ru.arvrlab.ar.measurement.R
 import ru.arvrlab.ar.measurement.core.*
 import ru.arvrlab.ar.measurement.core.Vector
 import java.io.ByteArrayOutputStream
@@ -66,6 +65,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private var redSphere: Renderable? = null
     private var blueSphere: Renderable? = null
+    private var modelRenderable: Renderable? = null
 
     /** Add the takePhoto method
      * The method takePhoto() uses the PixelCopy API to capture a screenshot of the ArSceneView.
@@ -99,6 +99,27 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             }
             .exceptionally {
                 Log.e(TAG, "Init Renderable Error", it)
+                return@exceptionally null
+            }
+
+        ModelRenderable
+            .builder()
+            .setSource(context, R.raw.orbit_45_4)
+
+            .build()
+            .thenAccept { renderable ->
+                modelRenderable = renderable
+                modelRenderable?.run {
+                    isShadowCaster = false
+                    isShadowReceiver = false
+                }
+            }.exceptionally {
+                AlertDialog.Builder(context).run {
+                    setMessage(it.message)
+                    setTitle("Error")
+                    create()
+                    show()
+                }
                 return@exceptionally null
             }
     }

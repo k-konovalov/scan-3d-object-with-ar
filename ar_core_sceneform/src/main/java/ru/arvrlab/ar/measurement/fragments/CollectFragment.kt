@@ -19,15 +19,17 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
+import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.ViewRenderable
+import com.google.ar.sceneform.ux.BaseArFragment
 import kotlinx.android.synthetic.main.collect_fragment.*
 import kotlinx.coroutines.*
 import ru.arvrlab.ar.measurement.R
 
 class CollectFragment : Fragment(R.layout.collect_fragment) {
 
-    private val arFragment by lazy { childFragmentManager.findFragmentById(R.id.fragmentSceneform) as MyArFragment }
+    private val arFragment by lazy { childFragmentManager.findFragmentById(R.id.fragmentSceneform) as MyArFragment}
 
     private val viewModel: CollectViewModel by viewModels()
 
@@ -91,6 +93,8 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
                 }
                 return@exceptionally null
             }
+
+
     }
 
     /**
@@ -170,7 +174,6 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
     }
 
     private fun realCheckRed() = { copyResult: Int ->
-
             if (copyResult == PixelCopy.SUCCESS) {
                 val smallBitmap = Bitmap.createScaledBitmap(
                     bitmap,
