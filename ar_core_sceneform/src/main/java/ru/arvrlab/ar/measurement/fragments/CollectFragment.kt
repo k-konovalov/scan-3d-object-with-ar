@@ -52,10 +52,6 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         initOnClickListeners()
         initObservers()
         viewModel.initRenderable(requireContext())
-
-        CoroutineScope(Dispatchers.Default).launch {
-
-        }
     }
 
     override fun onDestroy() {
@@ -174,7 +170,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
     }
 
     private fun realCheckRed() = { copyResult: Int ->
-            var redPixels = 0
+
             if (copyResult == PixelCopy.SUCCESS) {
                 val smallBitmap = Bitmap.createScaledBitmap(
                     bitmap,
@@ -182,26 +178,9 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
                     (bitmap.height * 0.1).toInt(),
                     false
                 )
-                for (x in 0 until smallBitmap.width) {
-                    for (y in 0 until smallBitmap.height) {
-                        val pixel = bitmap.getPixel(x, y)
-                        val hsv = FloatArray(3)
-                        Color.RGBToHSV(
-                            Color.red(pixel),
-                            Color.green(pixel),
-                            Color.blue(pixel),
-                            hsv
-                        )
-                        val hue = hsv[0]
-                        val value = hsv[2]
-
-                        val isPixelRed = (hue > 335f || hue < 25f) && value in 0.1f..0.95f
-                        if (isPixelRed) redPixels++
-                    }
-                }
+                val redPixels = countRedPixels(smallBitmap)
                 val allPixels = smallBitmap.height * smallBitmap.width
-                val percentOfRed =
-                    (redPixels.toFloat() / allPixels.toFloat()) * 100
+                val percentOfRed = (redPixels.toFloat() / allPixels.toFloat()) * 100
                 if (percentOfRed > 50)
                     Log.e(
                         "Pixel",
@@ -211,4 +190,25 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
 
             //handlerThread.quitSafely()
         }
+    fun countRedPixels(smallBitmap: Bitmap): Int {
+        var redPixels = 0
+        for (x in 0 until smallBitmap.width) {
+            for (y in 0 until smallBitmap.height) {
+                val pixel = smallBitmap.getPixel(x, y)
+                val hsv = FloatArray(3)
+                Color.RGBToHSV(
+                    Color.red(pixel),
+                    Color.green(pixel),
+                    Color.blue(pixel),
+                    hsv
+                )
+                val hue = hsv[0]
+                val value = hsv[2]
+
+                val isPixelRed = (hue > 335f || hue < 25f) && value in 0.1f..0.95f
+                if (isPixelRed) redPixels++
+            }
+        }
+        return redPixels
+    }
 }
