@@ -271,7 +271,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
 
         anchorNode2 = AnchorNode(cameraAnchor).apply {
-            renderable = arrowRedDownRenderable
+            renderable = redSphere
             setParent(arFragment.arSceneView?.scene)
         }
         /*
