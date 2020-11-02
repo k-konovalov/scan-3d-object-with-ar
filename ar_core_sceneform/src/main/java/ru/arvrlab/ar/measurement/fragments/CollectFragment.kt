@@ -19,6 +19,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.google.ar.core.HitResult
 import com.google.ar.core.Plane
+import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.Renderable
 import com.google.ar.sceneform.rendering.ViewRenderable
@@ -34,6 +35,10 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
     private val viewModel: CollectViewModel by viewModels()
 
     private var arrowRedDownRenderable: Renderable? = null
+    private val correctAnchors = mutableListOf<AnchorNode>()
+    private var isCameraTracking = true
+
+
     val arrowViewSize = 35
     val bitmap by lazy { Bitmap.createBitmap(
         arFragment.arSceneView.width,
@@ -45,6 +50,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         start()
     }
     val handler = Handler(handlerThread.looper)
+    var redCount = 0
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -108,6 +114,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
                 arrowRedDownRenderable ?: return@setOnTapArPlaneListener,
                 arFragment
             )
+            isCameraTracking = true
         }
 
         arFragment.arSceneView?.scene?.addOnUpdateListener {
@@ -184,11 +191,10 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
                 val redPixels = countRedPixels(smallBitmap)
                 val allPixels = smallBitmap.height * smallBitmap.width
                 val percentOfRed = (redPixels.toFloat() / allPixels.toFloat()) * 100
-                if (percentOfRed > 50)
-                    Log.e(
-                        "Pixel",
-                        "All:$allPixels %Red:${percentOfRed.toInt()} Red:$redPixels"
-                    )
+                if (percentOfRed > 40) {
+                    Log.e("Pixel", "All:$allPixels %Red:${percentOfRed.toInt()} Red:$redPixels")
+                    if(isCameraTracking) requireActivity().runOnUiThread { addPhotoCapturedAnchor() }
+                }
             }
 
             //handlerThread.quitSafely()
@@ -213,5 +219,27 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
             }
         }
         return redPixels
+    }
+
+    fun addPhotoCapturedAnchor(){
+        if (redCount < 30) redCount++
+        else {
+            redCount = 0
+            val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
+
+            if (correctAnchors.size != 4) {
+                val anchor = AnchorNode(cameraAnchor).apply {
+                    renderable = arrowRedDownRenderable
+                    setParent(arFragment.arSceneView?.scene)
+                }
+                correctAnchors.add(anchor)
+                Toast.makeText(requireContext(),"Captured", Toast.LENGTH_SHORT).show()
+            } else {
+                correctAnchors.forEach {
+                arFragment.arSceneView.scene.removeChild(it)
+            }
+            correctAnchors.clear()
+            }
+        }
     }
 }

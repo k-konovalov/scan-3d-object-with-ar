@@ -105,7 +105,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         ModelRenderable
             .builder()
             .setSource(context, R.raw.orbit_45_4)
-
+            .setIsFilamentGltf(true)
             .build()
             .thenAccept { renderable ->
                 modelRenderable = renderable
@@ -283,11 +283,22 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
 
         var orbitVector: Vector3
 
+        val transformableNode = TransformableNode(arFragment.transformationSystem).apply {
+            renderable = modelRenderable
+            scaleController.isEnabled = true
+            scaleController.minScale = 0.01f
+            scaleController.maxScale = 1f
+            translationController.isEnabled = false
+            rotationController.isEnabled = false
+        }
         orbitNode = AnchorNode(orbitAnchor).apply {
-            renderable = redSphere
+            renderable = blueSphere
             orbitVector = localPosition
             setParent(arFragment.arSceneView?.scene)
+            addChild(transformableNode)
         }
+
+
 
         val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
 
