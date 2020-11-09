@@ -13,7 +13,6 @@ import android.view.Gravity
 import android.view.PixelCopy
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import com.google.ar.core.HitResult
@@ -66,6 +65,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     private var tabClicked = false
     var isCameraTracking = true
     private var redCount = 0
+    private val step = 100 / 30f
     val redProgress = MutableLiveData<Int>()
     private val correctAnchors = mutableListOf<AnchorNode>()
     private var bitmap: Bitmap = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888)
@@ -341,6 +341,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             val redPixels = countRedPixels(smallBitmap)
             val allPixels = smallBitmap.height * smallBitmap.width
             val percentOfRed = (redPixels.toFloat() / allPixels.toFloat()) * 100
+            redProgress.postValue(getColorWith(percentOfRed))
             if (percentOfRed > 40) {
                 Log.e("Pixel", "All:$allPixels %Red:${percentOfRed.toInt()} Red:$redPixels")
                 if (isCameraTracking) mainScope.launch {
@@ -373,7 +374,6 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     private fun addPhotoCapturedAnchor(arFragment: MyArFragment){
-        redProgress.postValue(getColorWithStep())
         if (redCount < 30) {
             redCount++
         }
@@ -400,11 +400,9 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun getColorWithStep(): Int {
-        val step = 100 / 30f
-        val hsv = floatArrayOf(step * redCount, 100f, 100f) //hue, sat, val
-        return Color.parseColor(Color.HSVToColor(hsv).toString())
-    }
+    private fun getColorWith(percentOfRed: Float) = Color.parseColor(
+        Color.HSVToColor(floatArrayOf(percentOfRed, 100f, 100f)).toString() //hsv =  //hue, sat, val
+    )
 
     private fun addNextOrbit(arFragment: MyArFragment) {
         if (currentOrbitIndex < 3) {
