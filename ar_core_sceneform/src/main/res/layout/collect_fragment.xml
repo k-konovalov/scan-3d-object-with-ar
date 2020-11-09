@@ -11,38 +11,40 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <LinearLayout
+        android:id="@+id/llCamPos"
+        style="@style/Position.LinearLayouts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:orientation="horizontal"
+        android:visibility="visible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/txtCamX"
+            style="@style/Position.TextViews"
+            android:layout_weight="1"
+            android:text="0" />
+
+        <TextView
+            android:id="@+id/txtCamY"
+            style="@style/Position.TextViews"
+            android:layout_weight="1"
+            android:text="0" />
+
+        <TextView
+            android:id="@+id/txtCamZ"
+            style="@style/Position.TextViews"
+            android:layout_weight="1"
+            android:text="0" />
+    </LinearLayout>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="invisible">
-
-        <LinearLayout
-            android:id="@+id/llCamPos"
-            style="@style/Position.LinearLayouts"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:visibility="invisible"
-            tools:layout_editor_absoluteY="82dp">
-
-            <TextView
-                android:id="@+id/txtCamX"
-                style="@style/Position.TextViews"
-                android:layout_weight="1"
-                android:text="0" />
-
-            <TextView
-                android:id="@+id/txtCamY"
-                style="@style/Position.TextViews"
-                android:layout_weight="1"
-                android:text="0" />
-
-            <TextView
-                android:id="@+id/txtCamZ"
-                style="@style/Position.TextViews"
-                android:layout_weight="1"
-                android:text="0" />
-        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/llOrbitNodePos"
