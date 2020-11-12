@@ -66,7 +66,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     var isCameraTracking = true
     private var redCount = 0
     private val step = 100 / 30f
-    val redProgress = MutableLiveData<Int>()
+    val redProgress = MutableLiveData<Float>()
     private val correctAnchors = mutableListOf<AnchorNode>()
     private var bitmap: Bitmap = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888)
 
@@ -340,9 +340,9 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             )
             val redPixels = countRedPixels(smallBitmap)
             val allPixels = smallBitmap.height * smallBitmap.width
-            val percentOfRed = (redPixels.toFloat() / allPixels.toFloat()) * 100
-            redProgress.postValue(getColorWith(percentOfRed))
-            if (percentOfRed > 40) {
+            val percentOfRed = (redPixels.toFloat() / allPixels.toFloat())
+            redProgress.postValue(percentOfRed)
+            if (percentOfRed * 100 > 40) {
                 Log.e("Pixel", "All:$allPixels %Red:${percentOfRed.toInt()} Red:$redPixels")
                 if (isCameraTracking) mainScope.launch {
                     addPhotoCapturedAnchor(arFragment)
@@ -400,9 +400,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun getColorWith(percentOfRed: Float) = Color.parseColor(
-        Color.HSVToColor(floatArrayOf(percentOfRed, 100f, 100f)).toString() //hsv =  //hue, sat, val
-    )
+    fun getColorWith(percentOfRed: Float) = Color.argb(percentOfRed,1f,0f,0f)
 
     private fun addNextOrbit(arFragment: MyArFragment) {
         if (currentOrbitIndex < 3) {

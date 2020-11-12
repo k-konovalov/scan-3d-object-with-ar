@@ -3,6 +3,8 @@ package ru.arvrlab.ar.measurement.fragments
 import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.PorterDuff
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -78,7 +80,12 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
             })
 
             redProgress.observe(viewLifecycleOwner, Observer {
-                llCamPos.setBackgroundColor(it)
+                tvRedCount.text = if (it * 2.3 <= 1.0) (it * 2.3).toString().substring(0, 3) else "1.0"
+                tvRedCount.background.setColorFilter(
+                    viewModel.getColorWith(it * 2),
+                    PorterDuff.Mode.SRC_ATOP
+                )
+                //llCamPos.setBackgroundColor(it)
             })
 
             triangleCamObj.observe(viewLifecycleOwner, Observer {
@@ -89,12 +96,6 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
 
             angleCamObjVert.observe(viewLifecycleOwner, Observer {
                 tvCameraObjVertAngle.text = it.toString()
-            })
-
-            currentCameraPos.observe(viewLifecycleOwner, Observer {
-                txtCamX.text = it.x.toString()
-                txtCamY.text = it.y.toString()
-                txtCamZ.text = it.z.toString()
             })
 
             currentOrbitNodePos.observe(viewLifecycleOwner, Observer {
