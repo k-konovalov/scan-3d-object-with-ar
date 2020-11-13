@@ -85,23 +85,17 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
                     viewModel.getColorWith(it * 2),
                     PorterDuff.Mode.SRC_ATOP
                 )
-                //llCamPos.setBackgroundColor(it)
             })
 
             triangleCamObj.observe(viewLifecycleOwner, Observer {
                 tvCamObjGipotenuza?.text = "${it.x.toInt()}"
+                tvCamToObjDistance?.text = "${it.x.toInt()}"
                 tvCamObjKatet1?.text = "${it.y.toInt()}"
                 tvCamObjKatet2?.text = "${it.z.toInt()}"
             })
 
             angleCamObjVert.observe(viewLifecycleOwner, Observer {
                 tvCameraObjVertAngle.text = it.toString()
-            })
-
-            currentOrbitNodePos.observe(viewLifecycleOwner, Observer {
-                txtOrbitNodeX.text = it.x.toString()
-                txtOrbitNodeY.text = it.y.toString()
-                txtOrbitNodeZ.text = it.z.toString()
             })
         }
     }
