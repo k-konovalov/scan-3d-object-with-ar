@@ -86,9 +86,9 @@ public class Scene extends NodeParent {
   public static final EnvironmentalHdrParameters DEFAULT_HDR_PARAMETERS =
       EnvironmentalHdrParameters.makeDefault();
 
-  private final Camera camera;
-  @Nullable private final Sun sunlightNode;
-  @Nullable private final SceneView view;
+  private Camera camera;
+  @Nullable private  Sun sunlightNode;
+  @Nullable private  SceneView view;
   @Nullable private LightProbe lightProbe;
   private boolean lightProbeSet = false;
   private boolean isUnderTesting = false;
@@ -120,7 +120,23 @@ public class Scene extends NodeParent {
   public Scene(SceneView view) {
     Preconditions.checkNotNull(view, "Parameter \"view\" was null.");
     this.view = view;
+
     camera = new Camera(this);
+    if (!AndroidPreconditions.isMinAndroidApiLevel()) {
+      // Enforce min api level 24
+      sunlightNode = null;
+      return;
+    }
+    sunlightNode = new Sun(this);
+
+    // Setup the default lighting for the scene, if it exists.
+    setupLightProbe(view);
+  }
+
+  public void initUsbCamera(SceneView view) {
+    Preconditions.checkNotNull(view, "Parameter \"view\" was null.");
+    this.view = view;
+    camera = new CustomCameraArExternal( this);
     if (!AndroidPreconditions.isMinAndroidApiLevel()) {
       // Enforce min api level 24
       sunlightNode = null;

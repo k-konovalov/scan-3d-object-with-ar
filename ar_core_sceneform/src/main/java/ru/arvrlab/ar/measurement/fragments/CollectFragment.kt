@@ -55,6 +55,11 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        var isExternalCameraAttached = false
+        if(isExternalCameraAttached) {
+            arFragment.initUsbCamera()
+        }
+
         initArrow()
         initListeners()
         initOnClickListeners()

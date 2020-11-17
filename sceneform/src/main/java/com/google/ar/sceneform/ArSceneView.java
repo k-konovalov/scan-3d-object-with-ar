@@ -162,58 +162,6 @@ public class ArSceneView extends SceneView {
     }
   }
 
-  
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
   /**
    * Resumes the rendering thread and ARCore session.
    *
@@ -741,30 +689,9 @@ public class ArSceneView extends SceneView {
     }
   }
 
-  
-
-
   private static boolean loadUnifiedJni() {return false;}
 
-
-
-  
   private void reportEngineType() {return ;}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   private static native void nativeReportEngineType(
       Session session, String engineType, String engineVersion);

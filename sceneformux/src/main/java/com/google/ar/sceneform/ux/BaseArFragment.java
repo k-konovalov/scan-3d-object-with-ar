@@ -145,6 +145,10 @@ public abstract class BaseArFragment extends Fragment
     this.onSessionInitializationListener = onSessionInitializationListener;
   }
 
+  public void initUsbCamera() {
+    arSceneView.initUsbCamera();
+  }
+
   /**
    * Registers a callback to be invoked when an ARCore Plane is tapped. The callback will only be
    * invoked if no {@link com.google.ar.sceneform.Node} was tapped.
