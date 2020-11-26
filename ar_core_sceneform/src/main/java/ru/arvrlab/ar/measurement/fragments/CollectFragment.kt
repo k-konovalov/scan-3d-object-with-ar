@@ -87,6 +87,10 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
                 )
             })
 
+            controlDistanceForOrbitToUI.observe(viewLifecycleOwner, Observer {
+                tvCurrentFixedDistance.text = it.toString()
+            })
+
             triangleCamObj.observe(viewLifecycleOwner, Observer {
                 tvCamObjGipotenuza?.text = "${it.x.toInt()}"
                 tvCamToObjDistance?.text = "${it.x.toInt()}"

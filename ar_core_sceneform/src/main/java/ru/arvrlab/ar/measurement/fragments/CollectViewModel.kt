@@ -62,6 +62,9 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     private var currentOrbitIndex = 0
 
     //Tracking
+    private var isFirstResult = true
+    private var controlDistanceForOrbit = 0
+    val controlDistanceForOrbitToUI = MutableLiveData<Int>(0)
     private var tabClicked = false
     var isCameraTracking = true
     private var redCount = 0
@@ -380,19 +383,25 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         else {
             redCount = 0
             val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
-
-            if (correctAnchors.size != 4) {
+            val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
+            if(isFirstResult) {
+                isFirstResult = !isFirstResult
+                controlDistanceForOrbit = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
+                controlDistanceForOrbitToUI.postValue(controlDistanceForOrbit)
+            }
+            val testRange = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
+            if (correctAnchors.size != 4 && (testRange in controlDistanceForOrbit - 2..controlDistanceForOrbit + 2)) {
                 val anchor = AnchorNode(cameraAnchor).apply {
                     renderable = arrowRedDownRenderable
                     setParent(arFragment.arSceneView?.scene)
                 }
+                redCount = 0
                 correctAnchors.add(anchor)
                 toastMessage.postValue("Captured")
-            } else {
+            }
+            if(correctAnchors.size == 4) {
                 correctAnchors.run {
-                    forEach {
-                        arFragment.arSceneView.scene?.removeChild(it)
-                    }
+                    forEach { arFragment.arSceneView.scene?.removeChild(it) }
                     clear()
                 }
                 addNextOrbit(arFragment)
