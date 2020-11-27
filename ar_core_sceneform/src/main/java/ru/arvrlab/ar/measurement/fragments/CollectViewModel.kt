@@ -19,6 +19,7 @@ import com.google.ar.core.HitResult
 import com.google.ar.core.Pose
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.ArSceneView
+import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.*
 import com.google.ar.sceneform.ux.TransformableNode
@@ -59,6 +60,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     private var arrowRedDownRenderable: Renderable? = null
     private var mainObjectTorus: Renderable? = null
     private val orbits: MutableList<Renderable?> = mutableListOf()
+    private var correct: Renderable? = null
     private var currentOrbitIndex = 0
 
     //Tracking
@@ -70,7 +72,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     private var redCount = 0
     private val step = 100 / 30f
     val redProgress = MutableLiveData<Float>()
-    private val correctAnchors = mutableListOf<AnchorNode>()
+    private val correctAnchors = mutableListOf<Node>()
     private var bitmap: Bitmap = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888)
 
     /**
@@ -136,6 +138,27 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
                 }
                 return@exceptionally null
             }
+
+        ModelRenderable
+            .builder()
+            .setSource(context, R.raw.correct)
+            .setIsFilamentGltf(true)
+            .build()
+            .thenAccept { renderable ->
+                correct = renderable.apply {
+                    isShadowCaster = false
+                    isShadowReceiver = false
+                }
+            }.exceptionally {
+                AlertDialog.Builder(context).run {
+                    setMessage(it.message)
+                    setTitle("Error")
+                    create()
+                    show()
+                }
+                return@exceptionally null
+            }
+
         initArrow(context)
     }
 
@@ -391,12 +414,32 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             }
             val testRange = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
             if (correctAnchors.size != 4 && (testRange in controlDistanceForOrbit - 2..controlDistanceForOrbit + 2)) {
-                val anchor = AnchorNode(cameraAnchor).apply {
+                val zStridedNode = TransformableNode(arFragment.transformationSystem).apply {
+                    scaleController.minScale = 0.04f
+                    scaleController.maxScale = 0.10f
+
+                    scaleController.isEnabled = true
+
+                    renderable = correct
+                    setParent(arFragment.arSceneView?.scene)
+                    val camPos = cameraAnchor?.pose?.let { Vector3(it.tx(), it.ty(), it.tz()) }
+                    val orbitPos = orbitNode?.worldPosition ?: Vector3(0f,0f,0f)
+                    val avgPos = camPos?.let {
+                        Vector3(
+                            listOf(it.x, orbitPos.x).average().toFloat(),
+                            listOf(it.y, orbitPos.y).average().toFloat(),
+                            listOf(it.z, orbitPos.z).average().toFloat()
+                        )
+                    }
+                    worldPosition = avgPos
+                }
+                /*val anchor = AnchorNode(cameraAnchor).apply {
+                    worldPosition = cameraAnchor?.pose?.let { Vector3(it.tx(), it.ty(), it.tz() - 5f) }
                     renderable = arrowRedDownRenderable
                     setParent(arFragment.arSceneView?.scene)
-                }
+                }*/
                 redCount = 0
-                correctAnchors.add(anchor)
+                correctAnchors.add(zStridedNode)
                 toastMessage.postValue("Captured")
             }
             if(correctAnchors.size == 4) {
