@@ -76,6 +76,8 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     val redProgress = MutableLiveData<Float>()
     private val correctAnchors = mutableListOf<Node>()
     private var bitmap: Bitmap = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888)
+    private var savedBitmap: Bitmap = Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888)
+    val postedBitmap = MutableLiveData<Bitmap>()
 
     /**
      * инициальзирует объект Renderable для отображения на сцене
@@ -432,9 +434,12 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     private fun saveImage(arFragment: MyArFragment) {
-        arFragment.arSceneView.arFrame?.acquireCameraImage()?.use {img ->
-            YuvToRgbConverter.yuvToRgb(img)?.let { bitmap = it }
-            saveBitmapToDisk(bitmap)
+        CoroutineScope(Dispatchers.Default).launch {
+            arFragment.arSceneView.arFrame?.acquireCameraImage()?.use {img ->
+                savedBitmap = YuvToRgbConverter.yuvToRgb(img) ?: return@launch
+                saveBitmapToDisk(savedBitmap)
+                postedBitmap.postValue(savedBitmap)
+            }
         }
     }
 

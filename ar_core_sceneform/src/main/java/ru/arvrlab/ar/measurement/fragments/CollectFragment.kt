@@ -104,6 +104,18 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
             angleCamObjVert.observe(viewLifecycleOwner, Observer {
                 tvCameraObjVertAngle.text = it.toString()
             })
+            postedBitmap.observe(viewLifecycleOwner, Observer {
+                llCarouselImg.addView(
+                    ImageView(requireContext()).apply {
+                        adjustViewBounds = true
+                        maxWidth = 300
+                        setImageBitmap(it)
+                    }
+                )
+            })
+
+
+
         }
     }
 }

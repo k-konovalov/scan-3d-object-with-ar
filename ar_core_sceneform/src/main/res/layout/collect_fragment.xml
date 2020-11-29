@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent">
+    android:background="@drawable/back_square_white">
 
     <fragment
         android:id="@+id/fragmentSceneform"
@@ -18,10 +18,10 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:backgroundTintMode="add"
-        tools:text="CamToObjDistance"
         android:textColor="@android:color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="CamToObjDistance" />
 
     <TextView
         android:id="@+id/tvRedCount"
@@ -48,10 +48,29 @@
         app:layout_constraintEnd_toStartOf="@+id/tvCamToObjDistance"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#4DFFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/llCarouselImg"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:orientation="horizontal">
+        </LinearLayout>
+    </HorizontalScrollView>
+
     <androidx.constraintlayout.helper.widget.Layer
         android:id="@+id/lDebug"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="invisible"
         app:constraint_referenced_ids="linearLayout4,linearLayout2,linearLayout,linearLayout3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
