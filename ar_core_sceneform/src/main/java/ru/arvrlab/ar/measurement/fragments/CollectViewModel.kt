@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
@@ -13,12 +14,13 @@ import android.view.Gravity
 import android.view.PixelCopy
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
+import ru.arvrlab.ar.measurement.core.YuvToRgbConverter
 import com.google.ar.core.HitResult
 import com.google.ar.core.Pose
 import com.google.ar.sceneform.AnchorNode
-import com.google.ar.sceneform.ArSceneView
 import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.*
@@ -194,35 +196,33 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             }
     }
 
-    /** Add the takePhoto method
-     * The method takePhoto() uses the PixelCopy API to capture a screenshot of the ArSceneView.
-     * It is asynchronous since it actually happens between frames. When the listener is called,
-     * the bitmap is saved to the disk, and then a snackbar is shown with an intent to open the image
-     * in the Pictures application.
+
+
+    /** Add saveBitmapToDisk method
+     * saveBitmapToDisk() writes out the bitmap to the file.
      */
-    fun takePhoto(view: ArSceneView) {
+    private fun saveBitmapToDisk(bitmap: Bitmap) {
         val filename = generateFilename()
-        val image = view.arFrame?.acquireCameraImage()
+        val path = generatePath()
+        val out = File(path, filename)
 
-        // Create a bitmap the size of the scene view.
-        val bitmap = Bitmap.createBitmap(
-            view.width, view.height,
-            Bitmap.Config.ARGB_8888
-        )
-
-        // Create a handler thread to offload the processing of the image.
-        val handlerThread = HandlerThread("PixelCopier")
-        handlerThread.start()
-        // Make the request to copy.
-        PixelCopy.request(view, bitmap, { copyResult ->
-            if (copyResult == PixelCopy.SUCCESS) {
-                saveBitmapToDisk(bitmap, filename)
-                toastMessage.postValue("Photo saved")
-            } else {
-                toastMessage.postValue("Failed to copyPixels: $copyResult")
+        out.parentFile?.let {
+            if (!it.exists()) {
+                it.mkdirs()
             }
-            handlerThread.quitSafely()
-        }, Handler(handlerThread.looper))
+        }
+
+        try {
+            FileOutputStream(out.absolutePath).use { outputStream ->
+                ByteArrayOutputStream().use { outputData ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputData)
+                    outputData.writeTo(outputStream)
+                    outputStream.flush()
+                }
+            }
+        } catch (e: IOException) {
+            toastMessage.postValue(e.toString())
+        }
     }
 
     /** Add generateFilename method
@@ -232,37 +232,9 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
      * on the time, so they won't overwrite each other. This path is also related
      * to the paths.xml file we added previously.
      */
-    private fun generateFilename(): String {
-        val date = SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault()).format(Date())
-        return app.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-            .toString() + File.separator + "Sceneform/" + date + "_screenshot.jpeg"
-    }
+    private fun generateFilename() = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault()).format(Date()) + "_screenshot.jpeg"
 
-    /** Add saveBitmapToDisk method
-     * saveBitmapToDisk() writes out the bitmap to the file.
-     */
-    private fun saveBitmapToDisk(bitmap: Bitmap, filename: String) {
-        val out = File(filename)
-
-        out.parentFile?.let {
-            if (!it.exists()) {
-                it.mkdirs()
-            }
-        }
-
-        try {
-            FileOutputStream(filename).use { outputStream ->
-                ByteArrayOutputStream().use { outputData ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData)
-                    outputData.writeTo(outputStream)
-                    outputStream.flush()
-                    outputStream.close()
-                }
-            }
-        } catch (e: IOException) {
-            toastMessage.postValue(e.toString())
-        }
-    }
+    private fun generatePath() = app.cacheDir.toString() + "/Sceneform"
 
     /**
      * Меняет начальную точки съемки и текущее положение камеры.
@@ -317,10 +289,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
      * Реагирует только на первый тап (то есть можно поставить только одну точку)
      * Устанавливает начальные значения треугольнику и отображает стрелку на месте тапа
      */
-    private fun createThreeDots(
-        hitResult: HitResult,
-        arFragment: MyArFragment
-    ) {
+    private fun createThreeDots(hitResult: HitResult, arFragment: MyArFragment) {
         val orbitAnchor = hitResult.createAnchor()
         val transformableNode = initTransformableNode(arFragment)
 
@@ -371,7 +340,9 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             if (percentOfRed * 100 > 40) {
                 Log.e("Pixel", "All:$allPixels %Red:${percentOfRed.toInt()} Red:$redPixels")
                 if (isCameraTracking) mainScope.launch {
-                    addPhotoCapturedAnchor(arFragment)
+                    if (redCount < 30) {
+                        redCount++
+                    } else addPhotoCapturedAnchor(arFragment)
                 }
             }
         }
@@ -400,58 +371,55 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     }
 
     private fun addPhotoCapturedAnchor(arFragment: MyArFragment){
-        if (redCount < 30) {
-            redCount++
+        redCount = 0
+        val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
+        val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
+        if (isFirstResult) {
+            isFirstResult = !isFirstResult
+            controlDistanceForOrbit = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
+            controlDistanceForOrbitToUI.postValue(controlDistanceForOrbit)
         }
-        else {
+        val testRange = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
+        if (correctAnchors.size != 4 && (testRange in controlDistanceForOrbit - 2..controlDistanceForOrbit + 2)) {
+            val zStridedNode = TransformableNode(arFragment.transformationSystem).apply {
+                scaleController.minScale = 0.04f
+                scaleController.maxScale = 0.10f
+
+                scaleController.isEnabled = true
+
+                renderable = correct
+                setParent(arFragment.arSceneView?.scene)
+                val camPos = cameraAnchor?.pose?.let { Vector3(it.tx(), it.ty(), it.tz()) }
+                val orbitPos = orbitNode?.worldPosition ?: Vector3(0f, 0f, 0f)
+                val avgPos = camPos?.let {
+                    Vector3(
+                        listOf(it.x, orbitPos.x).average().toFloat(),
+                        listOf(it.y, orbitPos.y).average().toFloat(),
+                        listOf(it.z, orbitPos.z).average().toFloat()
+                    )
+                }
+                worldPosition = avgPos
+            }
+            /*val anchor = AnchorNode(cameraAnchor).apply {
+                worldPosition = cameraAnchor?.pose?.let { Vector3(it.tx(), it.ty(), it.tz() - 5f) }
+                renderable = arrowRedDownRenderable
+                setParent(arFragment.arSceneView?.scene)
+            }*/
             redCount = 0
-            val cameraAnchor = arFragment.arSceneView.session?.createAnchor(arFragment.arSceneView.arFrame?.camera?.pose)
-            val cameraPose = arFragment.arSceneView.arFrame?.camera?.pose ?: return
-            if(isFirstResult) {
-                isFirstResult = !isFirstResult
-                controlDistanceForOrbit = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
-                controlDistanceForOrbitToUI.postValue(controlDistanceForOrbit)
+            saveImage(arFragment)
+            correctAnchors.add(zStridedNode)
+            toastMessage.postValue("Captured")
+        }
+        if (correctAnchors.size == 4) {
+            correctAnchors.run {
+                forEach { arFragment.arSceneView.scene?.removeChild(it) }
+                clear()
             }
-            val testRange = (measureDistanceFromOrbitNodeToCamera(cameraPose) * 100).toInt()
-            if (correctAnchors.size != 4 && (testRange in controlDistanceForOrbit - 2..controlDistanceForOrbit + 2)) {
-                val zStridedNode = TransformableNode(arFragment.transformationSystem).apply {
-                    scaleController.minScale = 0.04f
-                    scaleController.maxScale = 0.10f
-
-                    scaleController.isEnabled = true
-
-                    renderable = correct
-                    setParent(arFragment.arSceneView?.scene)
-                    val camPos = cameraAnchor?.pose?.let { Vector3(it.tx(), it.ty(), it.tz()) }
-                    val orbitPos = orbitNode?.worldPosition ?: Vector3(0f,0f,0f)
-                    val avgPos = camPos?.let {
-                        Vector3(
-                            listOf(it.x, orbitPos.x).average().toFloat(),
-                            listOf(it.y, orbitPos.y).average().toFloat(),
-                            listOf(it.z, orbitPos.z).average().toFloat()
-                        )
-                    }
-                    worldPosition = avgPos
-                }
-                /*val anchor = AnchorNode(cameraAnchor).apply {
-                    worldPosition = cameraAnchor?.pose?.let { Vector3(it.tx(), it.ty(), it.tz() - 5f) }
-                    renderable = arrowRedDownRenderable
-                    setParent(arFragment.arSceneView?.scene)
-                }*/
-                redCount = 0
-                correctAnchors.add(zStridedNode)
-                toastMessage.postValue("Captured")
-            }
-            if(correctAnchors.size == 4) {
-                correctAnchors.run {
-                    forEach { arFragment.arSceneView.scene?.removeChild(it) }
-                    clear()
-                }
-                addNextOrbit(arFragment)
-            }
+            addNextOrbit(arFragment)
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun getColorWith(percentOfRed: Float) = Color.argb(percentOfRed,1f,0f,0f)
 
     private fun addNextOrbit(arFragment: MyArFragment) {
@@ -463,14 +431,11 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun saveImage(){
-        /*
-       arFragment.arSceneView.
-           val img = arFragment.arSceneView.arFrame?.acquireCameraImage()
-           val image = InputImage.fromMediaImage(img!!, 90)
-           image.bitmapInternal
-       */
-        //provideShift()
+    private fun saveImage(arFragment: MyArFragment) {
+        arFragment.arSceneView.arFrame?.acquireCameraImage()?.use {img ->
+            YuvToRgbConverter.yuvToRgb(img)?.let { bitmap = it }
+            saveBitmapToDisk(bitmap)
+        }
     }
 
     fun showDistances() {

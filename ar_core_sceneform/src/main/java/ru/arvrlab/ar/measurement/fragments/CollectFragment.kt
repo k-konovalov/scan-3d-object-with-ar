@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.ColorFilter
 import android.graphics.PorterDuff
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -16,6 +17,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -66,6 +68,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         }*/
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun initObservers() {
         val textObserver = Observer<Float>{
             //Todo: To better way
