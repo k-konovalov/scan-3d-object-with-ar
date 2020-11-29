@@ -70,6 +70,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
     private var controlDistanceForOrbit = 0
     val controlDistanceForOrbitToUI = MutableLiveData<Int>(0)
     private var tabClicked = false
+    val showUI = MutableLiveData<Boolean>(false)
     var isCameraTracking = true
     private var redCount = 0
     private val step = 100 / 30f
@@ -282,6 +283,7 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
         if (!tabClicked) {
             tabClicked = true
             isCameraTracking = true
+            showUI.postValue(true)
 
             createThreeDots(hitResult, arFragment)
         }
@@ -410,7 +412,6 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
             redCount = 0
             saveImage(arFragment)
             correctAnchors.add(zStridedNode)
-            toastMessage.postValue("Captured")
         }
         if (correctAnchors.size == 4) {
             correctAnchors.run {
@@ -435,10 +436,14 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private fun saveImage(arFragment: MyArFragment) {
         CoroutineScope(Dispatchers.Default).launch {
-            arFragment.arSceneView.arFrame?.acquireCameraImage()?.use {img ->
-                savedBitmap = YuvToRgbConverter.yuvToRgb(img) ?: return@launch
-                saveBitmapToDisk(savedBitmap)
-                postedBitmap.postValue(savedBitmap)
+            try {
+                arFragment.arSceneView.arFrame?.acquireCameraImage()?.use { img ->
+                    savedBitmap = YuvToRgbConverter.yuvToRgb(img) ?: return@launch
+                    saveBitmapToDisk(savedBitmap)
+                    postedBitmap.postValue(savedBitmap)
+                }
+            } catch (e: Exception) {
+                toastMessage.postValue(e.toString())
             }
         }
     }
@@ -463,4 +468,15 @@ class CollectViewModel(private val app: Application) : AndroidViewModel(app) {
 
     //Euclidean measure
     private fun calculateDistance(x: Float, y: Float, z: Float) = sqrt(x.pow(2) + y.pow(2) + z.pow(2))
+
+    fun clear(arFragment: MyArFragment){
+        controlDistanceForOrbit = 0
+        controlDistanceForOrbitToUI.postValue(0)
+        correctAnchors.run {
+            forEach { arFragment.arSceneView.scene?.removeChild(it) }
+            clear()
+        }
+        correctAnchors.clear()
+        //orbitNode?.children?.forEach { orbitNode?.removeChild(it) }
+    }
 }

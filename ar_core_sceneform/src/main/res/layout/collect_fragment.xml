@@ -9,7 +9,9 @@
         android:id="@+id/fragmentSceneform"
         android:name="ru.arvrlab.ar.measurement.fragments.MyArFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp" />
 
     <TextView
         android:id="@+id/tvCamToObjDistance"
@@ -17,11 +19,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:width="50dp"
         android:backgroundTintMode="add"
+        android:textAlignment="center"
         android:textColor="@android:color/black"
+        app:layout_constraintBottom_toTopOf="@+id/horizontalScrollView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="CamToObjDistance" />
+        tools:text="0" />
 
     <TextView
         android:id="@+id/tvRedCount"
@@ -29,11 +34,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
         android:backgroundTintMode="add"
         android:text="RedCount"
         android:textColor="@android:color/black"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/horizontalScrollView"
+        app:layout_constraintStart_toStartOf="parent" />
 
 
     <TextView
@@ -42,13 +48,29 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:width="50dp"
         android:backgroundTintMode="add"
-        android:text="FixedDIst"
+        android:text="0"
+        android:textAlignment="center"
         android:textColor="@android:color/black"
-        app:layout_constraintEnd_toStartOf="@+id/tvCamToObjDistance"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/horizontalScrollView"
+        app:layout_constraintEnd_toStartOf="@+id/tvCamToObjDistance" />
+
+    <ImageButton
+        android:id="@+id/ibClear"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/back_square_white"
+        android:tint="#FF0000"
+        app:layout_constraintBottom_toTopOf="@+id/horizontalScrollView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
 
     <HorizontalScrollView
+        android:id="@+id/horizontalScrollView"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:background="#4DFFFFFF"
@@ -62,15 +84,25 @@
             android:layout_height="match_parent"
             android:background="@android:color/transparent"
             android:gravity="center"
-            android:orientation="horizontal">
-        </LinearLayout>
+            android:orientation="horizontal"></LinearLayout>
     </HorizontalScrollView>
+
+    <androidx.constraintlayout.helper.widget.Layer
+        android:id="@+id/lUI"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:visibility="gone"
+        app:constraint_referenced_ids="tvCamToObjDistance,tvRedCount,tvCurrentFixedDistance,horizontalScrollView,ibClear"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.constraintlayout.helper.widget.Layer
         android:id="@+id/lDebug"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
+        android:visibility="gone"
         app:constraint_referenced_ids="linearLayout4,linearLayout2,linearLayout,linearLayout3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

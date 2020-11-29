@@ -18,6 +18,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -43,6 +44,7 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         initListeners()
         initOnClickListeners()
         initObservers()
+
         viewModel.initRenderable(requireContext())
     }
 
@@ -66,6 +68,10 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
         /*btnTakePhoto.setOnClickListener {
             viewModel.takePhoto(arFragment.arSceneView)
         }*/
+        ibClear.setOnClickListener {
+            llCarouselImg.removeAllViews()
+            viewModel.clear(arFragment)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -80,6 +86,10 @@ class CollectFragment : Fragment(R.layout.collect_fragment) {
 
             removeChild.observe(viewLifecycleOwner, Observer { anchorNode ->
                 arFragment.arSceneView.scene.removeChild(anchorNode)
+            })
+
+            showUI.observe(viewLifecycleOwner, Observer {
+                lUI.visibility = if (it) View.VISIBLE else View.GONE
             })
 
             redProgress.observe(viewLifecycleOwner, Observer {
